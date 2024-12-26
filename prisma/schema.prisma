@@ -21,7 +21,7 @@ model User {
     CreatorsOnConversation   Conversation[] @relation("CreatorOnConversation")
     RecipientsOnConversation Conversation[] @relation("RecipientOnConversation")
     Messages                 Message[]
-    ReceiverOnFriend         Friend[]       @relation("ReceiverOnFriend")
+    RecipientOnFriend        Friend[]       @relation("RecipientOnFriend")
     SenderOnFriend           Friend[]       @relation("SenderOnFriend")
 }
 
@@ -52,7 +52,7 @@ model Conversation {
 model Message {
     id             Int          @id @default(autoincrement())
     content        String
-    createdAt      DateTime
+    createdAt      DateTime     @default(now())
     author         User         @relation(fields: [authorId], references: [id])
     authorId       Int
     conversation   Conversation @relation("MessagesOnMessage", fields: [conversationId], references: [id])
@@ -62,9 +62,10 @@ model Message {
 }
 
 model Friend {
-    id         Int  @id @default(autoincrement())
-    receiver   User @relation("ReceiverOnFriend", fields: [receiverId], references: [id])
-    receiverId Int
-    sender     User @relation("SenderOnFriend", fields: [senderId], references: [id])
-    senderId   Int
+    id          Int      @id @default(autoincrement())
+    recipient   User     @relation("RecipientOnFriend", fields: [recipientId], references: [id])
+    recipientId Int
+    sender      User     @relation("SenderOnFriend", fields: [senderId], references: [id])
+    senderId    Int
+    createdAt   DateTime @default(now())
 }

@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import type { IAuthService } from './interfaces'
-import { EAuthMessages } from 'src/utils/messages'
 import { UserService } from '@/user/user.service'
 import { JWTService } from './jwt.service'
 import { CredentialService } from './credential.service'
@@ -8,6 +7,7 @@ import { Response } from 'express'
 import type { TUser } from '@/utils/entities/user.entity'
 import { CheckAuthEntity } from './auth.serialization'
 import type { TLoginUserParams } from './types'
+import { EAuthMessages } from './messages'
 
 @Injectable()
 export class AuthService implements IAuthService {

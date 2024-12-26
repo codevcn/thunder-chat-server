@@ -27,8 +27,5 @@ export type TCustomExceptionPayload = {
 export type TClientCookie = Record<EClientCookieNames, string>
 
 export type TSuccess = {
-   /**
-    * Always true
-    */
-   success: boolean
+   success: boolean // always true
 }

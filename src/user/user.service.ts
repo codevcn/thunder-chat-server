@@ -1,11 +1,11 @@
 import { Injectable, ConflictException, NotFoundException, Inject } from '@nestjs/common'
 import type { IUserService } from './interfaces'
-import type { TCreateUserParams } from './types'
-import { EAuthMessages } from 'src/utils/messages'
+import type { TCreateUserParams, TSearchUserData } from './types'
 import { PrismaService } from '../utils/ORM/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
 import { CredentialService } from '@/auth/credential.service'
+import { EAuthMessages } from '@/auth/messages'
 
 @Injectable()
 export class UserService implements IUserService {
@@ -61,5 +61,27 @@ export class UserService implements IUserService {
       }
 
       return user
+   }
+
+   async searchUsers(keyword: string): Promise<TSearchUserData[]> {
+      // Tìm kiếm các user dựa trên keyword
+      const users = await this.prismaService.user.findMany({
+         where: {
+            OR: [
+               { username: { contains: keyword, mode: 'insensitive' } },
+               { email: { contains: keyword, mode: 'insensitive' } },
+               { firstName: { contains: keyword, mode: 'insensitive' } },
+               { lastName: { contains: keyword, mode: 'insensitive' } },
+            ],
+         },
+         select: {
+            id: true,
+            username: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+         },
+      })
+      return users
    }
 }

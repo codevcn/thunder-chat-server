@@ -10,8 +10,8 @@ export class MessageController implements IMessageController {
 
    @Get('messages/:conversationId')
    async fetchMessages(@Param('conversationId') conversationId: string) {
-      return await this.messageService.findMessagesByConversationId({
-         conversationId: convertStringToNumber(conversationId, 10),
-      })
+      return await this.messageService.findMessagesByConversationId(
+         convertStringToNumber(conversationId, 10)
+      )
    }
 }

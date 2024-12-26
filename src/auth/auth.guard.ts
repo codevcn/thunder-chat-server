@@ -1,10 +1,10 @@
 import { Request } from 'express'
 import { EClientCookieNames } from '@/utils/enums'
-import { EAuthMessages } from 'src/utils/messages'
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common'
 import type { TJWTPayload } from './types'
 import { JWTService } from './jwt.service'
 import { UserService } from '@/user/user.service'
+import { EAuthMessages } from './messages'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -25,7 +25,7 @@ export class AuthGuard implements CanActivate {
       try {
          payload = await this.jwtService.verifyToken(token)
       } catch (error) {
-         throw new UnauthorizedException(EAuthMessages.AUTHENTICATION_FAIL)
+         throw new UnauthorizedException(EAuthMessages.AUTHENTICATION_FAILED)
       }
 
       try {

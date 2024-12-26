@@ -1,17 +1,19 @@
 import { Injectable } from '@nestjs/common'
 import { IChattingService } from './interfaces'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import { EClientCookieNames } from '@/utils/enums'
-import { EAuthMessages } from '@/utils/messages'
 import { TClientCookie } from '@/utils/types'
 import * as cookie from 'cookie'
 import { JwtService } from '@nestjs/jwt'
+import type { TClientAuth } from './types'
+import { EAuthMessages } from '@/auth/messages'
+import { BaseWsException } from './chatting.exception'
 
 @Injectable()
 export class ChattingService implements IChattingService {
    constructor(private jwtService: JwtService) {}
 
-   validateConnection(server: Server) {
+   validateConnection(server: Server): void {
       server.use(async (socket, next) => {
          const clientCookie = socket.handshake.headers.cookie
          if (!clientCookie) {
@@ -27,11 +29,19 @@ export class ChattingService implements IChattingService {
                secret: process.env.JWT_SECRET,
             })
          } catch (error) {
-            next(new Error(EAuthMessages.AUTHENTICATION_FAIL))
+            next(new Error(EAuthMessages.AUTHENTICATION_FAILED))
             return
          }
 
          next()
       })
+   }
+
+   validateAuthOfClient(client: Socket): TClientAuth {
+      const { clientId } = client.handshake.auth
+      if (!clientId) {
+         throw new BaseWsException(EAuthMessages.INVALID_CREDENTIALS)
+      }
+      return { clientId }
    }
 }

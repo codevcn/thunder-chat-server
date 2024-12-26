@@ -25,3 +25,8 @@ export class GetUserByEmailDTO {
    @IsEmail()
    email: string
 }
+
+export class SearchUsersDTO {
+   @IsNotEmpty()
+   keyword: string
+}

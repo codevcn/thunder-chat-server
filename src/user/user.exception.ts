@@ -1,10 +1,9 @@
-import { HttpException } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
 
-// for exceptions from user like wrong password, wrong credentials, ...
-export class UserException extends HttpException {
-   constructor(response: string, status: number) {
+// for exceptions by user such as wrong password, wrong credentials, ...
+export class ByUserException extends HttpException {
+   constructor(response: string, status: HttpStatus) {
       super(response, status)
-
       this.name = 'User Exception'
    }
 }

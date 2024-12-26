@@ -1,8 +1,8 @@
 import type {
    TStartConversationParams,
-   TStartConversationReturn,
+   TStartConversationData,
    TFindConversationParams,
-   TFindConversationReturn,
+   TFindConversationData,
    TSearchConversationParams,
 } from './types'
 import { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
@@ -17,11 +17,11 @@ export interface IConversationsService {
    startConversation: ({
       recipientId,
       creatorId,
-   }: TStartConversationParams) => Promise<TStartConversationReturn>
+   }: TStartConversationParams) => Promise<TStartConversationData>
    findConversation: ({
       recipientId,
       creatorId,
-   }: TFindConversationParams) => Promise<TFindConversationReturn | null>
+   }: TFindConversationParams) => Promise<TFindConversationData | null>
 }
 
 export interface IConversationsController {
@@ -32,6 +32,6 @@ export interface IConversationsController {
    startConversation: (
       user: TUser,
       createConversationPayload: CreateConversationDTO
-   ) => Promise<TStartConversationReturn>
-   fetchConversation: (conversationId: string) => Promise<TFindConversationReturn | null>
+   ) => Promise<TStartConversationData>
+   fetchConversation: (conversationId: string) => Promise<TFindConversationData | null>
 }

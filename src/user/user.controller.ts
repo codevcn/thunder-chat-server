@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
-import { CreateUserDTO, GetUserByEmailDTO } from '@/user/user.dto'
+import { CreateUserDTO, GetUserByEmailDTO, SearchUsersDTO } from '@/user/user.dto'
 import { UserService } from '@/user/user.service'
 import { ERoutes } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
@@ -31,5 +31,10 @@ export class UserController implements IUserController {
    @Get('getUserByEmail')
    async getUserByEmail(@Query() getUserByEmailPayload: GetUserByEmailDTO) {
       return await this.userService.getUserByEmail(getUserByEmailPayload.email)
+   }
+
+   @Get('search-users')
+   async searchUsers(@Query() searchUsersPayload: SearchUsersDTO) {
+      return await this.userService.searchUsers(searchUsersPayload.keyword)
    }
 }

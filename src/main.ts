@@ -2,9 +2,8 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { ValidationPipe } from '@nestjs/common'
-import { GlobalExceptionFilter } from './utils/exception/global-exception.filter'
+import { BaseHttpExceptionFilter } from './utils/exceptions/base-http-exception.filter'
 import cookieParser from 'cookie-parser'
-import { HttpExceptionValidation } from './utils/validation/http-exception.validation'
 
 async function bootstrap() {
    const app = await NestFactory.create<NestExpressApplication>(AppModule)
@@ -23,14 +22,13 @@ async function bootstrap() {
    })
 
    // global exception filter
-   app.useGlobalFilters(new GlobalExceptionFilter(new HttpExceptionValidation()))
+   app.useGlobalFilters(new BaseHttpExceptionFilter())
 
    // to be able to use dtos in controllers
    app.useGlobalPipes(new ValidationPipe())
 
-   await app.listen(PORT, () => {
-      console.log('>>> Server is working on PORT', PORT)
-   })
+   await app.listen(PORT || 8080)
+   console.log('>>> Server is working on PORT', PORT)
 }
 
 bootstrap()
