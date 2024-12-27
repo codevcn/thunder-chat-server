@@ -1,20 +1,10 @@
-import {
-   Controller,
-   Post,
-   Body,
-   Res,
-   UseGuards,
-   UseInterceptors,
-   ClassSerializerInterceptor,
-} from '@nestjs/common'
+import { Controller, Post, Body, Res, UseGuards, Get } from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
 import { LoginUserDTO } from '@/auth/auth.dto'
 import { AuthService } from '@/auth/auth.service'
 import type { Response } from 'express'
 import { AuthGuard } from '@/auth/auth.guard'
-import { User } from '@/user/user.decorator'
-import type { TUser } from '@/utils/entities/user.entity'
-import { IAuthController } from './interfaces'
+import type { IAuthController } from './interfaces'
 
 @Controller(ERoutes.AUTH)
 export class AuthController implements IAuthController {
@@ -28,14 +18,13 @@ export class AuthController implements IAuthController {
 
    @Post('logout')
    async logout(@Res({ passthrough: true }) res: Response) {
-      this.authService.logoutUser(res)
+      await this.authService.logoutUser(res)
       return { success: true }
    }
 
-   @Post('checkAuth')
+   @Get('check-auth')
    @UseGuards(AuthGuard)
-   @UseInterceptors(ClassSerializerInterceptor)
-   async authUser(@User() user: TUser) {
-      return this.authService.authUser(user)
+   async checkAuth() {
+      return { success: true }
    }
 }

@@ -23,16 +23,16 @@ export class MessageService {
       return await this.prismaService.message.create({
          data: {
             content,
-            author: {
+            Author: {
                connect: { id: authorId }, // Kết nối với user author
             },
-            conversation: {
+            Conversation: {
                connect: { id: conversationId }, // Kết nối với conversation
             },
          },
          include: {
-            author: true, // Bao gồm thông tin về author trong kết quả trả về
-            conversation: true, // Bao gồm thông tin về conversation trong kết quả trả về
+            Author: true, // Bao gồm thông tin về author trong kết quả trả về
+            Conversation: true, // Bao gồm thông tin về conversation trong kết quả trả về
          },
       })
    }

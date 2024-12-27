@@ -1,54 +1,66 @@
-import { IConversationsService } from './interfaces'
 import type {
    TStartConversationParams,
    TSearchConversationParams,
    TFindConversationParams,
+   TFindConversationData,
+   TStartConversationData,
 } from './types'
 import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
+import type { TUserWithProfile } from '@/utils/entities/user.entity'
 
 @Injectable()
-export class ConversationService implements IConversationsService {
+export class ConversationService {
    constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
 
-   async searchConversation({ email, username, nameOfUser, creatorId }: TSearchConversationParams) {
-      const user = await this.prismaService.user.findMany({
-         where: {
-            OR: [
-               { email },
-               { username },
-               {
-                  firstName: {
-                     contains: nameOfUser,
-                  },
-               },
-               {
-                  lastName: {
-                     contains: nameOfUser,
-                  },
-               },
-            ],
-            NOT: {
-               id: creatorId,
-            },
-         },
-         include: {
-            Profile: true,
-         },
-      })
+   // async searchConversation({
+   //    email,
+   //    username,
+   //    nameOfUser,
+   //    creatorId,
+   // }: TSearchConversationParams): Promise<TUserWithProfile[]> {
+   //    const user = await this.prismaService.user.findMany({
+   //       where: {
+   //          OR: [{ email }, { username }],
+   //          NOT: {
+   //             id: creatorId,
+   //          },
+   //       },
+   //       include: {
+   //          Profile: {
+   //             where: {
+   //                OR: [
+   //                   {
+   //                      firstName: {
+   //                         contains: nameOfUser,
+   //                      },
+   //                   },
+   //                   {
+   //                      lastName: {
+   //                         contains: nameOfUser,
+   //                      },
+   //                   },
+   //                ],
+   //             },
+   //          },
+   //       },
+   //    })
 
-      return user
-   }
+   //    return user
+   // }
 
-   async findConversation({ recipientId, creatorId }: TFindConversationParams) {
+   async findConversation({
+      recipientId,
+      creatorId,
+   }: TFindConversationParams): Promise<TFindConversationData | null> {
       return await this.prismaService.conversation.findFirst({
          where: {
             creatorId,
             recipientId,
          },
          include: {
-            recipient: {
+            Recipient: {
                include: {
                   Profile: true,
                },
@@ -57,11 +69,11 @@ export class ConversationService implements IConversationsService {
       })
    }
 
-   async findConversationById(id: number) {
+   async findConversationById(id: number): Promise<TFindConversationData | null> {
       return await this.prismaService.conversation.findUnique({
          where: { id },
          include: {
-            recipient: {
+            Recipient: {
                include: {
                   Profile: true,
                },
@@ -70,7 +82,10 @@ export class ConversationService implements IConversationsService {
       })
    }
 
-   async startConversation({ recipientId, creatorId }: TStartConversationParams) {
+   async startConversation({
+      recipientId,
+      creatorId,
+   }: TStartConversationParams): Promise<TStartConversationData> {
       const exist_conversation = await this.findConversation({ recipientId, creatorId })
       if (exist_conversation) {
          return exist_conversation
@@ -82,7 +97,7 @@ export class ConversationService implements IConversationsService {
             recipientId,
          },
          include: {
-            recipient: {
+            Recipient: {
                include: {
                   Profile: true,
                },

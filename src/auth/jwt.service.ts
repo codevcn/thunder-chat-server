@@ -2,11 +2,12 @@ import type { TJWTPayload, TSendJWTParams, TRemoveJWTParams } from './types'
 import { JwtService } from '@nestjs/jwt'
 import { EClientCookieNames } from '@/utils/enums'
 import { Injectable } from '@nestjs/common'
-import type { IJWTService } from './interfaces'
 import ms from 'ms'
+import type { TJWTToken } from '@/utils/types'
+import type { CookieOptions } from 'express'
 
 @Injectable()
-export class JWTService implements IJWTService {
+export class JWTService {
    private jwtCookieOptions = {
       maxAge: ms(process.env.JWT_TOKEN_MAX_AGE_IN_HOUR),
       domain: process.env.CLIENT_DOMAIN_DEV,
@@ -17,23 +18,23 @@ export class JWTService implements IJWTService {
 
    constructor(private jwtService: JwtService) {}
 
-   getJWTcookieOtps() {
+   getJWTcookieOtps(): CookieOptions {
       return this.jwtCookieOptions
    }
 
-   async createJWT(payload: TJWTPayload) {
+   async createJWT(payload: TJWTPayload): Promise<TJWTToken> {
       return {
          jwt_token: await this.jwtService.signAsync(payload),
       }
    }
 
-   async verifyToken(token: string) {
+   async verifyToken(token: string): Promise<TJWTPayload> {
       return await this.jwtService.verifyAsync<TJWTPayload>(token, {
          secret: process.env.JWT_SECRET,
       })
    }
 
-   sendJWT({ response, token, cookie_otps }: TSendJWTParams) {
+   async sendJWT({ response, token, cookie_otps }: TSendJWTParams): Promise<void> {
       response.cookie(
          EClientCookieNames.JWT_TOKEN_AUTH,
          token,
@@ -41,7 +42,7 @@ export class JWTService implements IJWTService {
       )
    }
 
-   removeJWT({ response, cookie_otps }: TRemoveJWTParams) {
+   async removeJWT({ response, cookie_otps }: TRemoveJWTParams): Promise<void> {
       response.clearCookie(
          EClientCookieNames.JWT_TOKEN_AUTH,
          cookie_otps || this.getJWTcookieOtps()

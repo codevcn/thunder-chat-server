@@ -5,7 +5,6 @@ import { ConversationService } from '@/conversation/conversation.service'
 import type { TUser } from '@/utils/entities/user.entity'
 import { BadRequestException, Body, Controller, Post, Get, UseGuards, Param } from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
-import { convertStringToNumber } from '@/utils/helpers'
 import { IConversationsController } from './interfaces'
 
 @Controller(ERoutes.CONVERSATIONS)
@@ -22,12 +21,14 @@ export class ConversationController implements IConversationsController {
       if (!email && !username && !nameOfUser) {
          throw new BadRequestException('Query is missing email and username and name')
       }
-      return await this.conversationService.searchConversation({
-         email: email,
-         username: username,
-         creatorId: user.id,
-         nameOfUser: nameOfUser,
-      })
+      // >>> fix this
+      // return await this.conversationService.searchConversation({
+      //    email: email,
+      //    username: username,
+      //    creatorId: user.id,
+      //    nameOfUser: nameOfUser,
+      // })
+      return []
    }
 
    @Post('start')
@@ -44,8 +45,6 @@ export class ConversationController implements IConversationsController {
 
    @Get('fetch/:conversationId')
    async fetchConversation(@Param('conversationId') conversationId: string) {
-      return await this.conversationService.findConversationById(
-         convertStringToNumber(conversationId, 10)
-      )
+      return await this.conversationService.findConversationById(parseInt(conversationId))
    }
 }

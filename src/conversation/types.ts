@@ -16,7 +16,7 @@ export type TStartConversationParams = {
 export type TFindConversationParams = TStartConversationParams
 
 export type TStartConversationData = TConversation & {
-   recipient: TUserWithProfile
+   Recipient: TUserWithProfile
 }
 
 export type TFindConversationData = TStartConversationData

@@ -1,6 +1,21 @@
-import { CheckAuthEntity } from '@/auth/auth.serialization'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import { Controller, Post, Body, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common'
+
+import { Exclude } from 'class-transformer'
+
+class CheckAuthEntity {
+   id: number
+   createdAt: Date
+   email: string
+   username: string | null
+
+   @Exclude()
+   password: string
+
+   constructor(user: CheckAuthEntity) {
+      Object.assign(this, user)
+   }
+}
 
 type TBody = {
    data: string

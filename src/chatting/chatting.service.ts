@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { IChattingService } from './interfaces'
 import { Server, Socket } from 'socket.io'
 import { EClientCookieNames } from '@/utils/enums'
 import { TClientCookie } from '@/utils/types'
@@ -10,7 +9,7 @@ import { EAuthMessages } from '@/auth/messages'
 import { BaseWsException } from './chatting.exception'
 
 @Injectable()
-export class ChattingService implements IChattingService {
+export class ChattingService {
    constructor(private jwtService: JwtService) {}
 
    validateConnection(server: Server): void {

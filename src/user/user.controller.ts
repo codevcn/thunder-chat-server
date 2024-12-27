@@ -4,7 +4,7 @@ import { UserService } from '@/user/user.service'
 import { ERoutes } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
 import type { Response } from 'express'
-import { IUserController } from './interfaces'
+import type { IUserController } from './interfaces'
 
 @Controller(ERoutes.USER)
 export class UserController implements IUserController {
@@ -20,7 +20,7 @@ export class UserController implements IUserController {
    ) {
       const { jwt_token } = await this.userService.registerUser(createUserPayload)
 
-      this.jwtService.sendJWT({
+      await this.jwtService.sendJWT({
          response: res,
          token: jwt_token,
       })

@@ -1,28 +1,12 @@
-import { TLoginUserParams, TJWTPayload, TSendJWTParams, TRemoveJWTParams } from './types'
-import type { TJWTToken, TSuccess } from '@/utils/types'
-import type { CookieOptions, Response } from 'express'
-import { LoginUserDTO } from './auth.dto'
-import { TUser } from '@/utils/entities/user.entity'
-import { CheckAuthEntity } from './auth.serialization'
+import type { TSuccess } from '@/utils/types'
+import type { Response } from 'express'
+import type { LoginUserDTO } from './auth.dto'
+import type { TUser } from '@/utils/entities/user.entity'
 
 export interface IAuthController {
    login: (loginUserPayload: LoginUserDTO, res: Response) => Promise<TSuccess>
    logout: (res: Response) => Promise<TSuccess>
-   authUser: (user: TUser) => Promise<CheckAuthEntity>
-}
-
-export interface IAuthService {
-   loginUser: (res: Response, loginUser: TLoginUserParams) => void
-   logoutUser: (res: Response) => void
-   authUser: (user: TUser) => CheckAuthEntity
-}
-
-export interface IJWTService {
-   getJWTcookieOtps: () => CookieOptions
-   createJWT: (payload: TJWTPayload) => Promise<TJWTToken>
-   sendJWT: (payload: TSendJWTParams) => void
-   removeJWT: (payload: TRemoveJWTParams) => void
-   verifyToken: (token: string) => Promise<TJWTPayload>
+   checkAuth: (user: TUser) => Promise<TSuccess>
 }
 
 export interface ICredentialService {

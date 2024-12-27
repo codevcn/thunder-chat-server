@@ -1,6 +1,5 @@
 import { MessageService } from '@/message/messages.service'
 import { ERoutes } from '@/utils/enums'
-import { convertStringToNumber } from '@/utils/helpers'
 import { Controller, Get, Param } from '@nestjs/common'
 import { IMessageController } from './interfaces'
 
@@ -10,8 +9,6 @@ export class MessageController implements IMessageController {
 
    @Get('messages/:conversationId')
    async fetchMessages(@Param('conversationId') conversationId: string) {
-      return await this.messageService.findMessagesByConversationId(
-         convertStringToNumber(conversationId, 10)
-      )
+      return await this.messageService.findMessagesByConversationId(parseInt(conversationId, 10))
    }
 }
