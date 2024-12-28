@@ -6,25 +6,24 @@ export type TCreateUserParams = {
    birthday: Date
 }
 
-export type TSearchUserData =
-   | {
-        id: number
-        User: {
-           id: number
-           email: string
-           username: string | null
-        }
-        fullName: string
-        avatar: string | null
-     }
-   | {
-        id: number
-        email: string
-        username: string | null
-        Profile: {
-           id: number
-           fullName: string
-           avatar: string | null
-           userId: number
-        } | null
-     }
+export type TSearchProfilesData = {
+   id: number
+   User: {
+      id: number
+      email: string
+      username: string | null
+   }
+   fullName: string
+   avatar: string | null
+}
+
+export type TSearchUsersData = {
+   id: number
+   email: string
+   username: string | null
+   Profile: {
+      id: number
+      fullName: string
+      avatar: string | null
+   } | null
+}

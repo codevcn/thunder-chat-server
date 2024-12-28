@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
-import { CreateUserDTO, GetUserByEmailDTO, SearchUsersDTO } from '@/user/user.dto'
+import { CreateUserDTO, GetUserByEmailDTO, SearchUsersDTO } from '@/user/DTO'
 import { UserService } from '@/user/user.service'
 import { ERoutes } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'

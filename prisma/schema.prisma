@@ -1,5 +1,6 @@
 generator client {
-    provider = "prisma-client-js"
+    provider        = "prisma-client-js"
+    previewFeatures = ["typedSql"]
 }
 
 datasource db {
@@ -15,11 +16,13 @@ model User {
     createdAt DateTime @default(now())
 
     Profile                  Profile?
-    CreatorsOnConversation   Conversation[] @relation("CreatorOnConversation")
-    RecipientsOnConversation Conversation[] @relation("RecipientOnConversation")
+    CreatorsOnConversation   Conversation[]  @relation("CreatorOnConversation")
+    RecipientsOnConversation Conversation[]  @relation("RecipientOnConversation")
     Messages                 Message[]
-    RecipientOnFriend        Friend[]       @relation("RecipientOnFriend")
-    SenderOnFriend           Friend[]       @relation("SenderOnFriend")
+    FriendRecipient          Friend[]        @relation("RecipientOnFriend")
+    FriendSender             Friend[]        @relation("SenderOnFriend")
+    FriendRequestsSender     FriendRequest[] @relation("SenderOnFriendRequests")
+    FriendRequestsRecipient  FriendRequest[] @relation("RecipientOnFriendRequests")
 }
 
 model Profile {
@@ -69,4 +72,22 @@ model Friend {
 
     Recipient User @relation("RecipientOnFriend", fields: [recipientId], references: [id])
     Sender    User @relation("SenderOnFriend", fields: [senderId], references: [id])
+}
+
+model FriendRequest {
+    id          Int                  @id @default(autoincrement())
+    senderId    Int
+    recipientId Int
+    status      FriendRequestsStatus
+    createdAt   DateTime             @default(now())
+    updatedAt   DateTime             @default(now())
+
+    Sender    User @relation("SenderOnFriendRequests", fields: [senderId], references: [id])
+    Recipient User @relation("RecipientOnFriendRequests", fields: [recipientId], references: [id])
+}
+
+enum FriendRequestsStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
 }

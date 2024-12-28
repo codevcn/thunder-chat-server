@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
-import type { ICredentialService } from './interfaces'
 
 @Injectable()
-export class CredentialService implements ICredentialService {
+export class CredentialService {
    async compareHashedPassword(password: string, encrypted: string): Promise<boolean> {
       return await bcrypt.compare(password, encrypted)
    }

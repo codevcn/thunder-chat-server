@@ -1,5 +1,5 @@
 import { User } from '@/user/user.decorator'
-import { CreateConversationDTO, SearchConversationDTO } from '@/conversation/conversation.dto'
+import { CreateConversationDTO, SearchConversationDTO } from '@/conversation/DTO'
 import { AuthGuard } from '@/auth/auth.guard'
 import { ConversationService } from '@/conversation/conversation.service'
 import type { TUser } from '@/utils/entities/user.entity'

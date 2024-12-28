@@ -3,6 +3,7 @@ export enum ERoutes {
    USER = 'user',
    CONVERSATIONS = 'conversations',
    MESSAGE = 'message',
+   FRIEND = 'friend',
 }
 
 export enum EClientCookieNames {
@@ -26,4 +27,8 @@ export enum ECommonStatuses {
 export enum EEnvironments {
    development = 'development',
    production = 'production',
+}
+
+export enum EEmitterEvents {
+   app_gateway_send_friend_request = 'app_gateway:send_friend_request',
 }

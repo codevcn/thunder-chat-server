@@ -8,8 +8,9 @@ import { PrismaModule } from './utils/ORM/prisma.module'
 import { envValidation } from './utils/validation/env.validation'
 import { UserModule } from './user/user.module'
 import ms from 'ms'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 
-const global_config_modules = [
+const globalConfigModules = [
    ConfigModule.forRoot({
       envFilePath: ['.env.development', '.env'],
       validate: envValidation,
@@ -22,19 +23,24 @@ const global_config_modules = [
          expiresIn: ms(process.env.JWT_TOKEN_MAX_AGE_IN_HOUR),
       },
    }),
+   EventEmitterModule.forRoot({ verboseMemoryLeak: true, delimiter: ':' }),
 ]
 
 // put gateway here to be able to get env right way
 import { ChattingModule } from './chatting/chatting.module'
+import { FriendModule } from './friend/friend.module'
+import { GatewayModule } from './gateway/gateway.module'
 
 @Module({
    imports: [
-      ...global_config_modules,
+      ...globalConfigModules,
       AuthModule,
+      GatewayModule,
       ConversationsModule,
       MessageModule,
       ChattingModule,
       UserModule,
+      FriendModule,
    ],
 })
 export class AppModule {}

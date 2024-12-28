@@ -1,5 +1,5 @@
 export enum ESocketNamespaces {
-   Chatting = 'Chatting',
+   app = 'app',
 }
 
 export enum EValidationMessages {

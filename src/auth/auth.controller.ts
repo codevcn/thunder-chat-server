@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Res, UseGuards, Get } from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
-import { LoginUserDTO } from '@/auth/auth.dto'
+import { LoginUserDTO } from '@/auth/DTO'
 import { AuthService } from '@/auth/auth.service'
 import type { Response } from 'express'
 import { AuthGuard } from '@/auth/auth.guard'

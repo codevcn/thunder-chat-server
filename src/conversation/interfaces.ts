@@ -1,12 +1,6 @@
-import type {
-   TStartConversationParams,
-   TStartConversationData,
-   TFindConversationParams,
-   TFindConversationData,
-   TSearchConversationParams,
-} from './types'
+import type { TStartConversationData, TFindConversationData } from './types'
 import { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
-import { CreateConversationDTO, SearchConversationDTO } from './conversation.dto'
+import { CreateConversationDTO, SearchConversationDTO } from './DTO'
 
 export interface IConversationsController {
    searchConversation: (

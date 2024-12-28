@@ -1,5 +1,5 @@
 import { Injectable, ConflictException, NotFoundException, Inject } from '@nestjs/common'
-import type { TCreateUserParams, TSearchUserData } from './types'
+import type { TCreateUserParams, TSearchUsersData, TSearchProfilesData } from './types'
 import { PrismaService } from '../utils/ORM/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
@@ -19,6 +19,15 @@ export class UserService {
    async findById(id: number): Promise<TUser | null> {
       return await this.prismaService.user.findUnique({
          where: { id },
+      })
+   }
+
+   async findUserWithProfileById(userId: number): Promise<TUserWithProfile | null> {
+      return await this.prismaService.user.findUnique({
+         where: { id: userId },
+         include: {
+            Profile: true,
+         },
       })
    }
 
@@ -60,49 +69,61 @@ export class UserService {
       return user
    }
 
-   async searchUsers(keyword: string): Promise<TSearchUserData[]> {
+   mergeSimilarUsers(profles: TSearchProfilesData[]): TSearchUsersData[] {
+      const users: TSearchUsersData[] = []
+      for (const profile of profles) {
+         const { User, ...profileInfo } = profile
+         const user = { ...User, Profile: profileInfo }
+         users.push(user)
+      }
+      return users
+   }
+
+   async searchUsers(keyword: string): Promise<TSearchUsersData[]> {
       // Tìm kiếm các user dựa trên keyword
-      const promises = [
-         this.prismaService.profile.findMany({
-            where: {
-               OR: [{ fullName: { contains: keyword, mode: 'insensitive' } }],
-            },
-            select: {
-               id: true,
-               fullName: true,
-               avatar: true,
-               User: {
-                  select: {
-                     id: true,
-                     email: true,
-                     username: true,
-                  },
+      const profiles = await this.prismaService.profile.findMany({
+         where: {
+            OR: [{ fullName: { contains: keyword, mode: 'insensitive' } }],
+         },
+         select: {
+            id: true,
+            fullName: true,
+            avatar: true,
+            User: {
+               select: {
+                  id: true,
+                  email: true,
+                  username: true,
                },
             },
-         }),
-         this.prismaService.user.findMany({
-            where: {
-               OR: [
-                  { username: { contains: keyword, mode: 'insensitive' } },
-                  { email: { contains: keyword, mode: 'insensitive' } },
-               ],
-            },
-            select: {
-               id: true,
-               email: true,
-               username: true,
-               Profile: {
-                  select: {
-                     id: true,
-                     fullName: true,
-                     avatar: true,
-                     userId: true,
-                  },
+         },
+      })
+      let userFilter: number[] | null = []
+      if (profiles && profiles.length > 0) {
+         userFilter = profiles.map((profile) => profile.User.id)
+      }
+      const users = await this.prismaService.user.findMany({
+         where: {
+            id: { notIn: userFilter },
+            OR: [
+               { username: { contains: keyword, mode: 'insensitive' } },
+               { email: { contains: keyword, mode: 'insensitive' } },
+            ],
+         },
+         select: {
+            id: true,
+            email: true,
+            username: true,
+            Profile: {
+               select: {
+                  id: true,
+                  fullName: true,
+                  avatar: true,
                },
             },
-         }),
-      ]
-      const users = await Promise.all(promises)
-      return users[0].concat(users[1])
+         },
+      })
+      const searchResult = users.concat(this.mergeSimilarUsers(profiles))
+      return searchResult
    }
 }

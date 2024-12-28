@@ -14,6 +14,11 @@ export class AuthGuard implements CanActivate {
    ) {}
 
    async canActivate(context: ExecutionContext): Promise<boolean> {
+      await this.authenticateUser(context)
+      return true
+   }
+
+   private async authenticateUser(context: ExecutionContext): Promise<void> {
       const req = context.switchToHttp().getRequest<Request>()
       const token = this.extractToken(req)
 
@@ -28,15 +33,9 @@ export class AuthGuard implements CanActivate {
          throw new UnauthorizedException(EAuthMessages.AUTHENTICATION_FAILED)
       }
 
-      try {
-         const user = await this.userService.findById(payload.user_id)
+      const user = await this.userService.findById(payload.user_id)
 
-         req['user'] = user
-      } catch (error) {
-         throw error
-      }
-
-      return true
+      req['user'] = user
    }
 
    private extractToken(req: Request): string | undefined {
