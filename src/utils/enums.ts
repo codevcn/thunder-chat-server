@@ -29,6 +29,6 @@ export enum EEnvironments {
    production = 'production',
 }
 
-export enum EEmitterEvents {
-   app_gateway_send_friend_request = 'app_gateway:send_friend_request',
+export enum EGatewayInternalEvents {
+   send_friend_request = 'send_friend_request',
 }

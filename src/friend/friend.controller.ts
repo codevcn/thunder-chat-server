@@ -1,22 +1,21 @@
 import { Body, Controller, Post } from '@nestjs/common'
 import { FriendService } from './friend.service'
-import type { TFriendRequest } from '@/utils/entities/friend.entity'
 import { SendFriendRequestDTO } from './DTO'
 import type { IFriendController } from './interface'
 import { ERoutes } from '@/utils/enums'
+import { TSuccess } from '@/utils/types'
 
 @Controller(ERoutes.FRIEND)
-export class FriendController {
+export class FriendController implements IFriendController {
    constructor(private friendService: FriendService) {}
 
    @Post('send-friend-request')
    async sendFriendRequest(
       @Body() sendFriendRequestPayload: SendFriendRequestDTO
-   ): Promise<number> {
+   ): Promise<TSuccess> {
       const { recipientId, senderId } = sendFriendRequestPayload
       console.log('>>> stuff:', sendFriendRequestPayload)
-      // return await this.friendService.sendFriendRequest(senderId, recipientId)
-      await this.friendService.countMutualFriend(recipientId, senderId)
-      return 111
+      await this.friendService.sendFriendRequest(senderId, recipientId)
+      return { success: true }
    }
 }

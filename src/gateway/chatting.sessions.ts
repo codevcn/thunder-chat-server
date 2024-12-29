@@ -12,4 +12,14 @@ export class GatewaySession {
    getClient<T extends EventsMap = EventsMap>(clientId: TUserId): Socket<T> | null {
       return this.connectedClients.get(clientId) || null
    }
+
+   removeClient(clientId: TUserId): void {
+      this.connectedClients.delete(clientId)
+   }
+
+   printOut() {
+      for (const [key, value] of this.connectedClients) {
+         console.log(`>>> ${key}: ${value.handshake?.auth.clientId}`)
+      }
+   }
 }

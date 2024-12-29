@@ -6,8 +6,8 @@ import { AuthService } from '@/auth/auth.service'
 import { CredentialService } from '@/auth/credential.service'
 
 @Module({
-   imports: [],
    controllers: [UserController],
    providers: [UserService, JWTService, AuthService, CredentialService],
+   exports: [JWTService, UserService, CredentialService],
 })
 export class UserModule {}

@@ -3,9 +3,10 @@ import { AppGateway } from './gateway'
 import { FriendService } from '@/friend/friend.service'
 import { ChattingService } from '@/chatting/chatting.service'
 import { MessageService } from '@/message/messages.service'
-import { UserService } from '@/user/user.service'
+import { UserModule } from '@/user/user.module'
 
 @Module({
-   providers: [AppGateway, FriendService, ChattingService, MessageService, UserService],
+   imports: [UserModule],
+   providers: [AppGateway, FriendService, ChattingService, MessageService],
 })
 export class GatewayModule {}

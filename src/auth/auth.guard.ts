@@ -32,7 +32,7 @@ export class AuthGuard implements CanActivate {
       } catch (error) {
          throw new UnauthorizedException(EAuthMessages.AUTHENTICATION_FAILED)
       }
-
+      console.log('>>> payload in auth:', payload)
       const user = await this.userService.findById(payload.user_id)
 
       req['user'] = user

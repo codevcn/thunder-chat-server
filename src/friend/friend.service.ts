@@ -2,10 +2,10 @@ import { BaseWsException } from '@/chatting/chatting.exception'
 import { EChattingMessags } from '@/chatting/messages'
 import { UserService } from '@/user/user.service'
 import type { TFriendRequest } from '@/utils/entities/friend.entity'
-import { EEmitterEvents, EProviderTokens } from '@/utils/enums'
+import { EGatewayInternalEvents, EProviderTokens } from '@/utils/enums'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import { Inject, Injectable } from '@nestjs/common'
-import type { EventEmitter2 } from '@nestjs/event-emitter'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { countMutualFriends } from '@prisma/client/sql'
 
 @Injectable()
@@ -26,9 +26,22 @@ export class FriendService {
       return true
    }
 
+   async findFriendRequest(senderId: number, recipientId: number): Promise<TFriendRequest | null> {
+      return await this.prismaService.friendRequest.findFirst({ where: { senderId, recipientId } })
+   }
+
    async sendFriendRequest(senderId: number, recipientId: number): Promise<TFriendRequest> {
-      const friendRequest = await this.prismaService.friendRequest.create({
-         data: {
+      const existing = await this.findFriendRequest(senderId, recipientId)
+      if (existing) {
+         return existing
+      }
+      const friendRequest = await this.prismaService.friendRequest.upsert({
+         where: {
+            id: 1,
+            AND: [{ recipientId }, { senderId }],
+         },
+         update: {},
+         create: {
             status: 'PENDING',
             recipientId,
             senderId,
@@ -40,7 +53,7 @@ export class FriendService {
       }
       const numOfMutualFriends = await this.countMutualFriend(recipientId, senderId)
       this.eventEmitter.emit(
-         EEmitterEvents.app_gateway_send_friend_request,
+         EGatewayInternalEvents.send_friend_request,
          sender,
          recipientId,
          numOfMutualFriends
@@ -56,7 +69,6 @@ export class FriendService {
     */
    async countMutualFriend(userId: number, personId: number): Promise<number> {
       const res = await this.prismaService.$queryRawTyped(countMutualFriends(userId, personId))
-      console.log('>>> res:', res)
-      return 11
+      return Number(res[0].mutualFriends)
    }
 }

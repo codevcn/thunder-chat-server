@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common'
 import { FriendController } from './friend.controller'
 import { FriendService } from './friend.service'
-import { UserService } from '@/user/user.service'
+import { UserModule } from '@/user/user.module'
 
 @Module({
+   imports: [UserModule],
    controllers: [FriendController],
-   providers: [FriendService, UserService],
+   providers: [FriendService],
 })
 export class FriendModule {}

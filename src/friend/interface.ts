@@ -1,6 +1,6 @@
-import type { TFriendRequest } from '@/utils/entities/friend.entity'
 import type { SendFriendRequestDTO } from './DTO'
+import { TSuccess } from '@/utils/types'
 
 export interface IFriendController {
-   sendFriendRequest: (sendFriendRequestPayload: SendFriendRequestDTO) => Promise<TFriendRequest>
+   sendFriendRequest: (sendFriendRequestPayload: SendFriendRequestDTO) => Promise<TSuccess>
 }

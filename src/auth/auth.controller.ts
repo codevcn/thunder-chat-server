@@ -1,10 +1,21 @@
-import { Controller, Post, Body, Res, UseGuards, Get } from '@nestjs/common'
+import {
+   Controller,
+   Post,
+   Body,
+   Res,
+   UseGuards,
+   Get,
+   UseInterceptors,
+   ClassSerializerInterceptor,
+} from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
-import { LoginUserDTO } from '@/auth/DTO'
+import { CheckAuthDataDTO, LoginUserDTO } from '@/auth/DTO'
 import { AuthService } from '@/auth/auth.service'
 import type { Response } from 'express'
 import { AuthGuard } from '@/auth/auth.guard'
 import type { IAuthController } from './interfaces'
+import { User } from '@/user/user.decorator'
+import { TUser } from '@/utils/entities/user.entity'
 
 @Controller(ERoutes.AUTH)
 export class AuthController implements IAuthController {
@@ -24,7 +35,8 @@ export class AuthController implements IAuthController {
 
    @Get('check-auth')
    @UseGuards(AuthGuard)
-   async checkAuth() {
-      return { success: true }
+   @UseInterceptors(ClassSerializerInterceptor)
+   async checkAuth(@User() user: TUser) {
+      return new CheckAuthDataDTO(user)
    }
 }

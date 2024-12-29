@@ -8,7 +8,6 @@ import {
 import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@nestjs/websockets'
 import { Server } from 'socket.io'
 import type { Socket } from 'socket.io'
-import type { IClientSocketEvents, IInitEvents } from '../chatting/interfaces'
 import { EClientSocketEvents, EInitEvents } from './events'
 import { ChattingService } from '../chatting/chatting.service'
 import { ESocketNamespaces } from '../chatting/enums'
@@ -28,7 +27,9 @@ import type { TSuccess } from '@/utils/types'
 import { MessageService } from '@/message/messages.service'
 import type { TUserWithProfile } from '@/utils/entities/user.entity'
 import { OnEvent } from '@nestjs/event-emitter'
-import { EEmitterEvents } from '@/utils/enums'
+import { EGatewayInternalEvents } from '@/utils/enums'
+import { TClientSocket } from './types'
+import { IEmitSocketEvents } from './interfaces'
 
 @WebSocketGateway({
    cors: {
@@ -44,8 +45,8 @@ import { EEmitterEvents } from '@/utils/enums'
 @UsePipes(wsValidationPipe)
 export class AppGateway
    implements
-      OnGatewayConnection<Socket<IInitEvents>>,
-      OnGatewayDisconnect<Socket<IInitEvents>>,
+      OnGatewayConnection<TClientSocket>,
+      OnGatewayDisconnect<TClientSocket>,
       OnGatewayInit<Server>
 {
    @WebSocketServer()
@@ -63,19 +64,21 @@ export class AppGateway
       this.chattingService.validateConnection(serverInit)
    }
 
-   handleConnection(client: Socket<IInitEvents>) {
+   handleConnection(client: TClientSocket) {
       console.log('>>> connected socket id:', client.id)
       const { clientId } = client.handshake.auth
       if (clientId) {
-         this.gatewaySession.addClient(client.handshake.auth.clientId, client)
+         this.gatewaySession.addClient(clientId, client)
          client.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
       } else {
          client.disconnect(true)
       }
    }
 
-   handleDisconnect(client: Socket<IInitEvents>) {
+   handleDisconnect(client: TClientSocket) {
       console.log('>>> discnn socket id:', client.id)
+      const { clientId } = client.handshake.auth
+      this.gatewaySession.removeClient(clientId)
    }
 
    @SubscribeMessage(EClientSocketEvents.send_message_1v1)
@@ -91,7 +94,7 @@ export class AppGateway
       if (!isFriend) {
          throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
       }
-      const recipientSocket = this.gatewaySession.getClient<IClientSocketEvents>(
+      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(
          receiverId.toString()
       )
       if (!recipientSocket) {
@@ -106,16 +109,23 @@ export class AppGateway
       return { success: true }
    }
 
-   @OnEvent(EEmitterEvents.app_gateway_send_friend_request, { async: true })
-   @CatchSocketErrors()
+   @OnEvent(EGatewayInternalEvents.send_friend_request, { async: true })
    async sendFriendRequest(
       sender: TUserWithProfile,
       recipientId: number,
       numOfMutualFriends: number
    ): Promise<void> {
-      const recipientSocket = this.gatewaySession.getClient<IClientSocketEvents>(
+      this.gatewaySession.printOut()
+      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(
          recipientId.toString()
       )
+      console.log('>>> reci:', {
+         recipientSocket: recipientSocket?.handshake.auth,
+         userId: recipientSocket?.handshake.auth,
+         sender,
+         recipientId: recipientId.toString(),
+         numOfMutualFriends,
+      })
       if (!recipientSocket) {
          throw new BaseWsException(EChattingMessags.RECIPIENT_NOT_FOUND)
       }

@@ -13,7 +13,7 @@ model User {
     email     String   @unique @db.VarChar(255)
     password  String   @db.VarChar(255)
     username  String?  @unique
-    createdAt DateTime @default(now())
+    createdAt DateTime @default(now()) @map("created_at")
 
     Profile                  Profile?
     CreatorsOnConversation   Conversation[]  @relation("CreatorOnConversation")
@@ -23,26 +23,30 @@ model User {
     FriendSender             Friend[]        @relation("SenderOnFriend")
     FriendRequestsSender     FriendRequest[] @relation("SenderOnFriendRequests")
     FriendRequestsRecipient  FriendRequest[] @relation("RecipientOnFriendRequests")
+
+    @@map("user")
 }
 
 model Profile {
     id        Int       @id @default(autoincrement())
-    fullName  String    @db.VarChar(255)
+    fullName  String    @map("full_name") @db.VarChar(255)
     birthday  DateTime? @db.Date
     about     String?
     avatar    String?
-    userId    Int       @unique
-    createdAt DateTime  @default(now())
+    userId    Int       @unique @map("user_id")
+    createdAt DateTime  @default(now()) @map("created_at")
 
     User User @relation(fields: [userId], references: [id])
+
+    @@map("profile")
 }
 
 model Conversation {
     id            Int      @id @default(autoincrement())
-    creatorId     Int
-    recipientId   Int
-    lastMsgSentId Int?     @unique
-    createdAt     DateTime @default(now())
+    creatorId     Int      @map("creator_id")
+    recipientId   Int      @map("recipient_id")
+    lastMsgSentId Int?     @unique @map("last_msg_sent_id")
+    createdAt     DateTime @default(now()) @map("created_at")
 
     Recipient   User      @relation("RecipientOnConversation", fields: [recipientId], references: [id])
     Creator     User      @relation("CreatorOnConversation", fields: [creatorId], references: [id])
@@ -50,40 +54,47 @@ model Conversation {
     Messages    Message[] @relation("MessagesOnMessage")
 
     @@unique([creatorId, recipientId])
+    @@map("conversation")
 }
 
 model Message {
     id             Int      @id @default(autoincrement())
     content        String
-    authorId       Int
-    conversationId Int
-    createdAt      DateTime @default(now())
+    authorId       Int      @map("author_id")
+    conversationId Int      @map("conversation_id")
+    createdAt      DateTime @default(now()) @map("created_at")
 
     Conversation      Conversation  @relation("MessagesOnMessage", fields: [conversationId], references: [id])
     Author            User          @relation(fields: [authorId], references: [id])
     LastMsgSentOnConv Conversation? @relation("lastMsgSentOnConv")
+
+    @@map("message")
 }
 
 model Friend {
     id          Int      @id @default(autoincrement())
-    recipientId Int
-    senderId    Int
-    createdAt   DateTime @default(now())
+    recipientId Int      @map("recipient_id")
+    senderId    Int      @map("sender_id")
+    createdAt   DateTime @default(now()) @map("created_at")
 
     Recipient User @relation("RecipientOnFriend", fields: [recipientId], references: [id])
     Sender    User @relation("SenderOnFriend", fields: [senderId], references: [id])
+
+    @@map("friend")
 }
 
 model FriendRequest {
     id          Int                  @id @default(autoincrement())
-    senderId    Int
-    recipientId Int
+    senderId    Int                  @map("sender_id")
+    recipientId Int                  @map("recipient_id")
     status      FriendRequestsStatus
-    createdAt   DateTime             @default(now())
-    updatedAt   DateTime             @default(now())
+    createdAt   DateTime             @default(now()) @map("created_at")
+    updatedAt   DateTime             @default(now()) @map("updated_at")
 
     Sender    User @relation("SenderOnFriendRequests", fields: [senderId], references: [id])
     Recipient User @relation("RecipientOnFriendRequests", fields: [recipientId], references: [id])
+
+    @@map("friend_request")
 }
 
 enum FriendRequestsStatus {

@@ -1,25 +1,27 @@
 import { BaseWsException } from '@/chatting/chatting.exception'
 import { Catch, ArgumentsHost, HttpStatus } from '@nestjs/common'
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets'
-import { Socket } from 'socket.io'
 import type { TWsErrorResponse } from './types'
+import type { TClientSocket } from '@/gateway/types'
+import { EClientSocketEvents } from '@/gateway/events'
 
 @Catch(WsException)
 export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
    catch(exception: WsException, host: ArgumentsHost) {
-      const clientSocket = host.switchToWs().getClient<Socket>()
+      const clientSocket = host.switchToWs().getClient<TClientSocket>()
       const formattedException = this.formatException(exception)
-      clientSocket.emit('error', formattedException)
+      clientSocket.emit(EClientSocketEvents.error, formattedException)
       super.catch(exception, host)
    }
 
-   private formatException(exception: WsException) {
+   private formatException(exception: WsException): TWsErrorResponse {
       const toReturn = {
          message: exception.message,
-         status: HttpStatus.INTERNAL_SERVER_ERROR,
+         httpStatus: HttpStatus.INTERNAL_SERVER_ERROR,
+         isError: true,
       }
       if (exception instanceof BaseWsException) {
-         toReturn.status = exception.status
+         toReturn.httpStatus = exception.status
       }
       return toReturn
    }
@@ -29,7 +31,6 @@ export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
 export function CatchSocketErrors() {
    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
       const originalMethod = descriptor.value
-
       descriptor.value = async function (...args: any[]): Promise<TWsErrorResponse> {
          try {
             // call original function
@@ -42,10 +43,10 @@ export function CatchSocketErrors() {
             return {
                isError: true,
                message: error.message || 'Unknow Error',
+               httpStatus: error.status,
             }
          }
       }
-
       return descriptor
    }
 }

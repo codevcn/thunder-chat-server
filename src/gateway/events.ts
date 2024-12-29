@@ -5,4 +5,5 @@ export enum EInitEvents {
 export enum EClientSocketEvents {
    send_message_1v1 = 'send_message:1v1',
    send_friend_request = 'send_friend_request',
+   error = 'error',
 }
