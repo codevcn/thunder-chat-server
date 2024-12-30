@@ -9,27 +9,26 @@ import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@n
 import { Server } from 'socket.io'
 import type { Socket } from 'socket.io'
 import { EClientSocketEvents, EInitEvents } from './events'
-import { ChattingService } from '../chatting/chatting.service'
-import { ESocketNamespaces } from '../chatting/enums'
+import { EChattingMessages, ESocketNamespaces } from './enums'
 import { GatewaySession } from './chatting.sessions'
 import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
-import { ChattingPayloadDTO } from '../chatting/DTO'
 import { FriendService } from '@/friend/friend.service'
-import { wsValidationPipe } from '../chatting/chatting.validation'
-import { BaseWsException } from '../chatting/chatting.exception'
+import { BaseWsException } from '../utils/exceptions/base-ws.exception'
 import { EFriendMessages } from '@/friend/messages'
 import {
    CatchSocketErrors,
    BaseWsExceptionsFilter,
 } from '@/utils/exceptions/base-ws-exception.filter'
-import { EChattingMessags } from '../chatting/messages'
 import type { TSuccess } from '@/utils/types'
 import { MessageService } from '@/message/messages.service'
 import type { TUserWithProfile } from '@/utils/entities/user.entity'
 import { OnEvent } from '@nestjs/event-emitter'
 import { EGatewayInternalEvents } from '@/utils/enums'
-import { TClientSocket } from './types'
-import { IEmitSocketEvents } from './interfaces'
+import type { TClientSocket } from './types'
+import type { IEmitSocketEvents } from './interfaces'
+import { wsValidationPipe } from './validation'
+import { GatewayService } from './gateway.service'
+import { ChattingPayloadDTO } from './DTO'
 
 @WebSocketGateway({
    cors: {
@@ -55,13 +54,13 @@ export class AppGateway
    private readonly gatewaySession = new GatewaySession()
 
    constructor(
-      private chattingService: ChattingService,
+      private gatewayService: GatewayService,
       private friendService: FriendService,
       private messageService: MessageService
    ) {}
 
    afterInit(serverInit: Server) {
-      this.chattingService.validateConnection(serverInit)
+      this.gatewayService.validateConnection(serverInit)
    }
 
    handleConnection(client: TClientSocket) {
@@ -87,18 +86,16 @@ export class AppGateway
       @MessageBody() payload: ChattingPayloadDTO,
       @ConnectedSocket() client: Socket
    ): Promise<TSuccess> {
-      const { clientId } = this.chattingService.validateAuthOfClient(client)
+      const { clientId } = this.gatewayService.validateAuthOfClient(client)
       const { message, receiverId, conversationId } = payload
       console.log('>>> stuff:', { clientId, receiverId })
       const isFriend = await this.friendService.isFriend(clientId, receiverId)
       if (!isFriend) {
          throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
       }
-      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(
-         receiverId.toString()
-      )
+      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(receiverId)
       if (!recipientSocket) {
-         throw new BaseWsException(EChattingMessags.RECIPIENT_NOT_FOUND)
+         throw new BaseWsException(EChattingMessages.RECIPIENT_NOT_FOUND)
       }
       const newMessage = await this.messageService.createNewMessage(
          message,
@@ -115,19 +112,9 @@ export class AppGateway
       recipientId: number,
       numOfMutualFriends: number
    ): Promise<void> {
-      this.gatewaySession.printOut()
-      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(
-         recipientId.toString()
-      )
-      console.log('>>> reci:', {
-         recipientSocket: recipientSocket?.handshake.auth,
-         userId: recipientSocket?.handshake.auth,
-         sender,
-         recipientId: recipientId.toString(),
-         numOfMutualFriends,
-      })
+      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(recipientId)
       if (!recipientSocket) {
-         throw new BaseWsException(EChattingMessags.RECIPIENT_NOT_FOUND)
+         throw new BaseWsException(EChattingMessages.RECIPIENT_NOT_FOUND)
       }
       recipientSocket.emit(EClientSocketEvents.send_friend_request, sender, numOfMutualFriends)
    }

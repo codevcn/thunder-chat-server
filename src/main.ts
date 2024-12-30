@@ -25,7 +25,7 @@ async function bootstrap() {
    app.useGlobalFilters(new BaseHttpExceptionFilter())
 
    // to be able to use dtos in controllers
-   app.useGlobalPipes(new ValidationPipe())
+   app.useGlobalPipes(new ValidationPipe({ transform: true }))
 
    await app.listen(PORT || 8080)
    console.log('>>> Server is working on PORT', PORT)

@@ -7,21 +7,12 @@ export type TRequestWithUser = Request & { user: TUser }
 export type THttpErrorResBody = {
    name: string
    message: string
-   trace: string
    timestamp: Date
-   isUserException: boolean
+   isUserError: boolean
 }
 
 export type TJWTToken = {
    jwt_token: string
-}
-
-export type TCustomExceptionPayload = {
-   message: string
-   name: string
-   stack: string
-   status: number
-   isUserException: boolean
 }
 
 export type TClientCookie = Record<EClientCookieNames, string>

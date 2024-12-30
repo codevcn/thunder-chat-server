@@ -1,6 +1,6 @@
 import { IsEmail, IsISO8601, IsNotEmpty, MinLength } from 'class-validator'
 import { ELengths } from '@/utils/enums'
-import { EValidationMessages } from 'src/utils/messages'
+import { EValidationMessages } from '@/utils/validation/messages'
 
 export class CreateUserDTO {
    @IsNotEmpty()

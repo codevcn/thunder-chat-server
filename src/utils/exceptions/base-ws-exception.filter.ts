@@ -1,4 +1,4 @@
-import { BaseWsException } from '@/chatting/chatting.exception'
+import { BaseWsException } from '@/utils/exceptions/base-ws.exception'
 import { Catch, ArgumentsHost, HttpStatus } from '@nestjs/common'
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets'
 import type { TWsErrorResponse } from './types'

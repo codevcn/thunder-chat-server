@@ -1,6 +1,6 @@
 import { ValidationError, ValidationPipe } from '@nestjs/common'
-import { EValidationMessages } from './enums'
-import { BaseWsException } from './chatting.exception'
+import { BaseWsException } from '../utils/exceptions/base-ws.exception'
+import { EValidationMessages } from '@/utils/validation/messages'
 
 export const wsValidationPipe = new ValidationPipe({
    transform: true,

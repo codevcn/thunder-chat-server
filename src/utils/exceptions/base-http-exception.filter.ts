@@ -1,8 +1,8 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common'
 import type { Response } from 'express'
 import type { THttpErrorResBody } from '@/utils/types'
-import { EValidationMessages } from '../messages'
-import { ByUserException } from '@/user/user.exception'
+import { BaseHttpException } from './base-http.exception'
+import { EValidationMessages } from '../validation/messages'
 
 @Catch(HttpException)
 export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
@@ -16,8 +16,7 @@ export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
          name: formattedException.name,
          message: formattedException.message,
          timestamp: new Date(),
-         trace: formattedException.stack,
-         isUserException: formattedException.isUserException,
+         isUserError: formattedException.isUserError,
       })
    }
 
@@ -27,7 +26,7 @@ export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
          name: exception.name,
          stack: exception.stack || EValidationMessages.NO_TRACE,
          status: exception.getStatus(),
-         isUserException: this.checkIsUserException(exception),
+         isUserError: this.checkIsUserException(exception),
       }
    }
 
@@ -50,6 +49,6 @@ export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
    }
 
    private checkIsUserException(exception: HttpException) {
-      return exception instanceof ByUserException
+      return exception instanceof BaseHttpException && exception.isUserError
    }
 }

@@ -27,7 +27,6 @@ const globalConfigModules = [
 ]
 
 // put gateway here to be able to get env right way
-import { ChattingModule } from './chatting/chatting.module'
 import { FriendModule } from './friend/friend.module'
 import { GatewayModule } from './gateway/gateway.module'
 
@@ -38,7 +37,6 @@ import { GatewayModule } from './gateway/gateway.module'
       GatewayModule,
       ConversationsModule,
       MessageModule,
-      ChattingModule,
       UserModule,
       FriendModule,
    ],
