@@ -10,7 +10,7 @@ import { Server } from 'socket.io'
 import type { Socket } from 'socket.io'
 import { EClientSocketEvents, EInitEvents } from './events'
 import { EChattingMessages, ESocketNamespaces } from './enums'
-import { GatewaySession } from './chatting.sessions'
+import { GatewaySession } from './gateway.session'
 import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
 import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
@@ -107,15 +107,11 @@ export class AppGateway
    }
 
    @OnEvent(EGatewayInternalEvents.send_friend_request, { async: true })
-   async sendFriendRequest(
-      sender: TUserWithProfile,
-      recipientId: number,
-      numOfMutualFriends: number
-   ): Promise<void> {
+   async sendFriendRequest(sender: TUserWithProfile, recipientId: number): Promise<void> {
       const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(recipientId)
       if (!recipientSocket) {
          throw new BaseWsException(EChattingMessages.RECIPIENT_NOT_FOUND)
       }
-      recipientSocket.emit(EClientSocketEvents.send_friend_request, sender, numOfMutualFriends)
+      recipientSocket.emit(EClientSocketEvents.send_friend_request, sender)
    }
 }

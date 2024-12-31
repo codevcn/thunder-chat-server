@@ -20,3 +20,7 @@ export type TClientCookie = Record<EClientCookieNames, string>
 export type TSuccess = {
    success: boolean // always true
 }
+
+export type TSignatureObject = {
+   [key: string | number]: any
+}

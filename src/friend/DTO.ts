@@ -27,11 +27,7 @@ export class FriendRequestActionDTO {
 export class GetFriendRequestsDTO {
    @IsNotEmpty()
    @IsNumber()
-   senderId: number
-
-   @IsNotEmpty()
-   @IsNumber()
-   recipientId: number
+   userId: number
 
    @IsNotEmpty()
    @IsNumber()
