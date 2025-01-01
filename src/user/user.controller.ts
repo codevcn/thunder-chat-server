@@ -28,8 +28,8 @@ export class UserController implements IUserController {
       return { success: true }
    }
 
-   @Get('getUserByEmail')
-   async getUserByEmail(@Query() getUserByEmailPayload: GetUserByEmailDTO) {
+   @Get('get-user')
+   async getUser(@Query() getUserByEmailPayload: GetUserByEmailDTO) {
       return await this.userService.getUserByEmail(getUserByEmailPayload.email)
    }
 

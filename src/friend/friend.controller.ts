@@ -1,10 +1,14 @@
-import { Body, Controller, Get, Param, ParseEnumPipe, Post } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { FriendService } from './friend.service'
-import { FriendRequestActionDTO, GetFriendRequestsDTO, SendFriendRequestDTO } from './DTO'
+import {
+   FriendRequestActionDTO,
+   GetFriendRequestsDTO,
+   GetFriendsDTO,
+   SendFriendRequestDTO,
+} from './DTO'
 import type { IFriendController } from './interface'
 import { ERoutes } from '@/utils/enums'
 import type { TSuccess } from '@/utils/types'
-import { EFriendRequestStatus } from './enums'
 
 @Controller(ERoutes.FRIEND)
 export class FriendController implements IFriendController {
@@ -19,19 +23,19 @@ export class FriendController implements IFriendController {
       return { success: true }
    }
 
-   @Post('friend-request-action/:action')
-   async friendRequestAction(
-      @Body()
-      friendRequestActionPayload: FriendRequestActionDTO,
-      @Param('action', new ParseEnumPipe(EFriendRequestStatus))
-      action: EFriendRequestStatus
-   ) {
-      await this.friendService.friendRequestAction(friendRequestActionPayload, action)
+   @Post('friend-request-action')
+   async friendRequestAction(@Body() friendRequestActionPayload: FriendRequestActionDTO) {
+      await this.friendService.friendRequestAction(friendRequestActionPayload)
       return { success: true }
    }
 
    @Get('get-friend-requests')
-   async getFriendRequests(@Body() getFriendRequestsPayload: GetFriendRequestsDTO) {
+   async getFriendRequests(@Query() getFriendRequestsPayload: GetFriendRequestsDTO) {
       return await this.friendService.getFriendRequests(getFriendRequestsPayload)
+   }
+
+   @Get('get-friends')
+   async getFriends(@Query() getFriendsPayload: GetFriendsDTO) {
+      return await this.friendService.getFriends(getFriendsPayload)
    }
 }

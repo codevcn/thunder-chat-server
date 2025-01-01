@@ -2,14 +2,14 @@ import { UserService } from '@/user/user.service'
 import type { TFriendRequest } from '@/utils/entities/friend.entity'
 import { EGatewayInternalEvents, EProviderTokens } from '@/utils/enums'
 import { PrismaService } from '@/utils/ORM/prisma.service'
-import type { TSignatureObject, TSuccess } from '@/utils/types'
+import type { TSignatureObject } from '@/utils/types'
 import { Inject, Injectable, BadRequestException } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { countMutualFriends, countMutualFriendRequests } from '@prisma/client/sql'
+import { countMutualFriends } from '@prisma/client/sql'
 import { EFriendRequestStatus } from './enums'
-import { FriendRequestActionDTO, GetFriendRequestsDTO } from './DTO'
+import { FriendRequestActionDTO, GetFriendRequestsDTO, GetFriendsDTO } from './DTO'
 import { EFriendMessages } from './messages'
-import type { TGetFriendRequestsData } from './types'
+import type { TGetFriendRequestsData, TGetFriendsData } from './types'
 
 @Injectable()
 export class FriendService {
@@ -54,6 +54,9 @@ export class FriendService {
    }
 
    async sendFriendRequest(senderId: number, recipientId: number): Promise<void> {
+      if (senderId === recipientId) {
+         throw new BadRequestException(EFriendMessages.SEND_TO_MYSELF)
+      }
       const existing = await this.findFriendRequestWithStatus(
          senderId,
          recipientId,
@@ -81,29 +84,26 @@ export class FriendService {
       return Number(res[0].mutualFriends)
    }
 
-   async friendRequestAction(
-      friendRequestPayload: FriendRequestActionDTO,
-      status: EFriendRequestStatus
-   ): Promise<TSuccess> {
-      const { friendRequestId, recipientId, senderId } = friendRequestPayload
-      switch (status) {
+   async friendRequestAction(friendRequestPayload: FriendRequestActionDTO): Promise<void> {
+      const { friendRequestId, action } = friendRequestPayload
+      switch (action) {
          case EFriendRequestStatus.ACCEPTED:
-            await this.prismaService.$transaction([
-               this.prismaService.friendRequest.update({
+            await this.prismaService.$transaction(async (tx) => {
+               const friendRequest = await this.prismaService.friendRequest.update({
                   where: {
                      id: friendRequestId,
                   },
                   data: {
                      status: EFriendRequestStatus.ACCEPTED,
                   },
-               }),
-               this.prismaService.friend.create({
+               })
+               await this.prismaService.friend.create({
                   data: {
-                     recipientId,
-                     senderId,
+                     recipientId: friendRequest.recipientId,
+                     senderId: friendRequest.senderId,
                   },
-               }),
-            ])
+               })
+            })
             break
          case EFriendRequestStatus.REJECTED:
             await this.prismaService.friendRequest.update({
@@ -116,7 +116,6 @@ export class FriendService {
             })
             break
       }
-      return { success: true }
    }
 
    async getFriendRequests(
@@ -138,9 +137,7 @@ export class FriendService {
          where: {
             OR: [{ recipientId: userId }, { senderId: userId }],
          },
-         orderBy: {
-            id: 'asc',
-         },
+         orderBy: [{ id: 'asc' }, { createdAt: 'desc' }],
          select: {
             id: true,
             Sender: {
@@ -150,6 +147,37 @@ export class FriendService {
             },
             createdAt: true,
             status: true,
+         },
+      })
+   }
+
+   async getFriends(getFriendsPayload: GetFriendsDTO): Promise<TGetFriendsData[]> {
+      const { limit, userId, lastFriendRequestId } = getFriendsPayload
+      let cursor: TSignatureObject = {}
+      if (lastFriendRequestId) {
+         cursor = {
+            skip: 1,
+            cursor: {
+               id: lastFriendRequestId,
+            },
+         }
+      }
+      return await this.prismaService.friend.findMany({
+         take: limit,
+         ...cursor,
+         where: {
+            senderId: userId,
+         },
+         orderBy: [{ id: 'asc' }, { createdAt: 'desc' }],
+         select: {
+            id: true,
+            senderId: true,
+            Recipient: {
+               include: {
+                  Profile: true,
+               },
+            },
+            createdAt: true,
          },
       })
    }

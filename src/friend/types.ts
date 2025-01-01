@@ -7,3 +7,10 @@ export type TGetFriendRequestsData = {
    createdAt: Date
    status: $Enums.FriendRequestsStatus
 }
+
+export type TGetFriendsData = {
+   id: number
+   senderId: number
+   createdAt: Date
+   Recipient: TUserWithProfile
+}

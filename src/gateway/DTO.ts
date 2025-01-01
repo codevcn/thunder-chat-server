@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer'
 import { IsNotEmpty, IsNumber } from 'class-validator'
 
 export class ChattingPayloadDTO {
@@ -10,5 +11,6 @@ export class ChattingPayloadDTO {
 
    @IsNumber()
    @IsNotEmpty()
+   @Type(() => Number)
    conversationId: number
 }

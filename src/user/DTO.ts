@@ -23,6 +23,7 @@ export class CreateUserDTO {
 
 export class GetUserByEmailDTO {
    @IsEmail()
+   @IsNotEmpty()
    email: string
 }
 

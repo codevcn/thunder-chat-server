@@ -6,6 +6,6 @@ import type { Response } from 'express'
 
 export interface IUserController {
    register: (createUserPayload: CreateUserDTO, res: Response) => Promise<TSuccess>
-   getUserByEmail: (getUserByEmailPayload: GetUserByEmailDTO) => Promise<TUserWithProfile>
+   getUser: (getUserByEmailPayload: GetUserByEmailDTO) => Promise<TUserWithProfile>
    searchUsers: (searchUsersPayload: SearchUsersDTO) => Promise<TSearchUsersData[]>
 }

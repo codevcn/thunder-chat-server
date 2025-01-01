@@ -1,7 +1,12 @@
-import type { FriendRequestActionDTO, GetFriendRequestsDTO, SendFriendRequestDTO } from './DTO'
+import type {
+   FriendRequestActionDTO,
+   GetFriendRequestsDTO,
+   GetFriendsDTO,
+   SendFriendRequestDTO,
+} from './DTO'
 import type { TSuccess } from '@/utils/types'
 import { EFriendRequestStatus } from './enums'
-import type { TGetFriendRequestsData } from './types'
+import type { TGetFriendRequestsData, TGetFriendsData } from './types'
 
 export interface IFriendController {
    sendFriendRequest: (sendFriendRequestPayload: SendFriendRequestDTO) => Promise<TSuccess>
@@ -12,4 +17,5 @@ export interface IFriendController {
    getFriendRequests: (
       getFriendRequestsPayload: GetFriendRequestsDTO
    ) => Promise<TGetFriendRequestsData[]>
+   getFriends: (getFriendsPayload: GetFriendsDTO) => Promise<TGetFriendsData[]>
 }
