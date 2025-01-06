@@ -1,5 +1,5 @@
-import { TConversation } from '@/utils/entities/conversation.entity'
-import { TUserWithProfile } from '@/utils/entities/user.entity'
+import type { TConversation } from '@/utils/entities/conversation.entity'
+import type { TUserWithProfile } from '@/utils/entities/user.entity'
 
 export type TSearchConversationParams = {
    email?: string
@@ -7,13 +7,6 @@ export type TSearchConversationParams = {
    creatorId: number
    nameOfUser?: string
 }
-
-export type TStartConversationParams = {
-   recipientId: number
-   creatorId: number
-}
-
-export type TFindConversationParams = TStartConversationParams
 
 export type TStartConversationData = TConversation & {
    Recipient: TUserWithProfile

@@ -35,6 +35,6 @@ export class UserController implements IUserController {
 
    @Get('search-users')
    async searchUsers(@Query() searchUsersPayload: SearchUsersDTO) {
-      return await this.userService.searchUsers(searchUsersPayload.keyword)
+      return await this.userService.searchUsers(searchUsersPayload)
    }
 }

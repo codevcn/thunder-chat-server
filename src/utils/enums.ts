@@ -28,7 +28,3 @@ export enum EEnvironments {
    development = 'development',
    production = 'production',
 }
-
-export enum EGatewayInternalEvents {
-   send_friend_request = 'send_friend_request',
-}

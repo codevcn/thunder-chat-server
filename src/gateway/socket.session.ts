@@ -2,7 +2,7 @@ import { Socket } from 'socket.io'
 import { EventsMap } from 'socket.io/dist/typed-events'
 import type { TUserId } from './types'
 
-export class GatewaySession {
+export class SocketSession {
    private readonly connectedClients = new Map<TUserId, Socket>()
 
    addClient(clientId: TUserId, client: Socket): void {
@@ -19,7 +19,7 @@ export class GatewaySession {
 
    printOut() {
       for (const [key, value] of this.connectedClients) {
-         console.log(`>>> ${key}: ${value.handshake?.auth.clientId}`)
+         console.log(`>>> key: ${key} - something: ${value.handshake?.auth.clientId}`)
       }
    }
 }

@@ -6,7 +6,8 @@ import { JWTService } from '@/auth/jwt.service'
 import { CredentialService } from '@/auth/credential.service'
 import { EAuthMessages } from '@/auth/messages'
 import { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
-import { TJWTToken } from '@/utils/types'
+import { TJWTToken, TSignatureObject } from '@/utils/types'
+import { SearchUsersDTO } from './DTO'
 
 @Injectable()
 export class UserService {
@@ -79,9 +80,21 @@ export class UserService {
       return users
    }
 
-   async searchUsers(keyword: string): Promise<TSearchUsersData[]> {
+   async searchUsers(searchUsersPayload: SearchUsersDTO): Promise<TSearchUsersData[]> {
       // Tìm kiếm các user dựa trên keyword
+      const { keyword, lastUserId, limit } = searchUsersPayload
+      let cursor: TSignatureObject = {}
+      if (lastUserId) {
+         cursor = {
+            skip: 1,
+            cursor: {
+               id: lastUserId,
+            },
+         }
+      }
       const profiles = await this.prismaService.profile.findMany({
+         take: limit,
+         ...cursor,
          where: {
             OR: [{ fullName: { contains: keyword, mode: 'insensitive' } }],
          },
@@ -98,11 +111,11 @@ export class UserService {
             },
          },
       })
-      let userFilter: number[] | null = []
-      if (profiles && profiles.length > 0) {
-         userFilter = profiles.map((profile) => profile.User.id)
-      }
+      const userFilter: number[] =
+         profiles && profiles.length > 0 ? profiles.map((profile) => profile.User.id) : []
       const users = await this.prismaService.user.findMany({
+         take: limit,
+         ...cursor,
          where: {
             id: { notIn: userFilter },
             OR: [
@@ -123,7 +136,7 @@ export class UserService {
             },
          },
       })
-      const searchResult = users.concat(this.mergeSimilarUsers(profiles))
+      const searchResult = [...users, ...this.mergeSimilarUsers(profiles)]
       return searchResult
    }
 }

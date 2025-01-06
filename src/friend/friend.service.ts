@@ -1,32 +1,34 @@
 import { UserService } from '@/user/user.service'
 import type { TFriendRequest } from '@/utils/entities/friend.entity'
-import { EGatewayInternalEvents, EProviderTokens } from '@/utils/enums'
+import { EProviderTokens } from '@/utils/enums'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import type { TSignatureObject } from '@/utils/types'
 import { Inject, Injectable, BadRequestException } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { countMutualFriends } from '@prisma/client/sql'
 import { EFriendRequestStatus } from './enums'
 import { FriendRequestActionDTO, GetFriendRequestsDTO, GetFriendsDTO } from './DTO'
 import { EFriendMessages } from './messages'
 import type { TGetFriendRequestsData, TGetFriendsData } from './types'
+import { SocketService } from '@/gateway/socket.service'
 
 @Injectable()
 export class FriendService {
    constructor(
       @Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService,
       private userService: UserService,
-      private eventEmitter: EventEmitter2
+      private socketService: SocketService
    ) {}
 
    async isFriend(userId: number, personId: number): Promise<boolean> {
       const isFriend = await this.prismaService.friend.findFirst({
-         where: { senderId: userId, recipientId: personId },
+         where: {
+            OR: [
+               { AND: [{ senderId: userId }, { recipientId: personId }] },
+               { AND: [{ senderId: personId }, { recipientId: userId }] },
+            ],
+         },
       })
-      if (!isFriend) {
-         return false
-      }
-      return true
+      return isFriend ? true : false
    }
 
    async create(senderId: number, recipientId: number): Promise<TFriendRequest> {
@@ -43,13 +45,15 @@ export class FriendService {
       return await this.prismaService.friendRequest.findFirst({ where: { senderId, recipientId } })
    }
 
-   async findFriendRequestWithStatus(
+   async findSentFriendRequest(
       senderId: number,
-      recipientId: number,
-      status: EFriendRequestStatus
+      recipientId: number
    ): Promise<TFriendRequest | null> {
       return await this.prismaService.friendRequest.findFirst({
-         where: { senderId, recipientId, status },
+         where: {
+            senderId: { in: [senderId, recipientId] },
+            status: { in: [EFriendRequestStatus.PENDING, EFriendRequestStatus.ACCEPTED] },
+         },
       })
    }
 
@@ -57,11 +61,7 @@ export class FriendService {
       if (senderId === recipientId) {
          throw new BadRequestException(EFriendMessages.SEND_TO_MYSELF)
       }
-      const existing = await this.findFriendRequestWithStatus(
-         senderId,
-         recipientId,
-         EFriendRequestStatus.PENDING
-      )
+      const existing = await this.findSentFriendRequest(senderId, recipientId)
       if (existing) {
          throw new BadRequestException(EFriendMessages.INVITATION_SENT_BEFORE)
       }
@@ -70,7 +70,7 @@ export class FriendService {
       if (!sender) {
          throw new BadRequestException(EFriendMessages.SENDER_NOT_FOUND)
       }
-      this.eventEmitter.emit(EGatewayInternalEvents.send_friend_request, sender, recipientId)
+      await this.socketService.sendFriendRequest(sender, recipientId)
    }
 
    /**
@@ -137,10 +137,15 @@ export class FriendService {
          where: {
             OR: [{ recipientId: userId }, { senderId: userId }],
          },
-         orderBy: [{ id: 'asc' }, { createdAt: 'desc' }],
+         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
          select: {
             id: true,
             Sender: {
+               include: {
+                  Profile: true,
+               },
+            },
+            Recipient: {
                include: {
                   Profile: true,
                },
@@ -168,7 +173,7 @@ export class FriendService {
          where: {
             senderId: userId,
          },
-         orderBy: [{ id: 'asc' }, { createdAt: 'desc' }],
+         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
          select: {
             id: true,
             senderId: true,

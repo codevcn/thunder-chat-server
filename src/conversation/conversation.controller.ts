@@ -37,10 +37,7 @@ export class ConversationController implements IConversationsController {
       @Body() createConversationPayload: CreateConversationDTO
    ) {
       const { recipientId } = createConversationPayload
-      return await this.conversationService.startConversation({
-         creatorId: user.id,
-         recipientId,
-      })
+      return await this.conversationService.startConversation(recipientId, user.id)
    }
 
    @Get('fetch/:conversationId')

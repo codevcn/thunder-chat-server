@@ -3,5 +3,5 @@ export enum ESocketNamespaces {
 }
 
 export enum EChattingMessages {
-   RECIPIENT_NOT_FOUND = 'Reciever was not found',
+   RECIPIENT_NOT_FOUND = 'Recipient was not found',
 }

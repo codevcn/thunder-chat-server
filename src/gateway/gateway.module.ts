@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common'
 import { AppGateway } from './gateway'
 import { FriendService } from '@/friend/friend.service'
-import { MessageService } from '@/message/messages.service'
 import { UserModule } from '@/user/user.module'
-import { GatewayService } from './gateway.service'
+import { SocketModule } from './socket.module'
+import { MessageModule } from '@/message/message.module'
 
 @Module({
-   imports: [UserModule],
-   providers: [AppGateway, FriendService, MessageService, GatewayService],
+   imports: [UserModule, SocketModule, MessageModule],
+   providers: [AppGateway, FriendService],
 })
 export class GatewayModule {}

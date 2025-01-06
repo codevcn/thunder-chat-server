@@ -4,6 +4,7 @@ import { $Enums } from '@prisma/client'
 export type TGetFriendRequestsData = {
    id: number
    Sender: TUserWithProfile
+   Recipient: TUserWithProfile
    createdAt: Date
    status: $Enums.FriendRequestsStatus
 }

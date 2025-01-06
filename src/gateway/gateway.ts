@@ -3,14 +3,12 @@ import {
    MessageBody,
    SubscribeMessage,
    WebSocketGateway,
-   WebSocketServer,
 } from '@nestjs/websockets'
 import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@nestjs/websockets'
 import { Server } from 'socket.io'
 import type { Socket } from 'socket.io'
 import { EClientSocketEvents, EInitEvents } from './events'
 import { EChattingMessages, ESocketNamespaces } from './enums'
-import { GatewaySession } from './gateway.session'
 import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
 import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
@@ -21,14 +19,17 @@ import {
 } from '@/utils/exceptions/base-ws-exception.filter'
 import type { TSuccess } from '@/utils/types'
 import { MessageService } from '@/message/messages.service'
-import type { TUserWithProfile } from '@/utils/entities/user.entity'
-import { OnEvent } from '@nestjs/event-emitter'
-import { EGatewayInternalEvents } from '@/utils/enums'
-import type { TClientSocket } from './types'
-import type { IEmitSocketEvents } from './interfaces'
+import type { TClientAuth, TClientSocket } from './types'
+import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
-import { GatewayService } from './gateway.service'
+import { SocketService } from './socket.service'
 import { ChattingPayloadDTO } from './DTO'
+import { EClientCookieNames } from '@/utils/enums'
+import type { TClientCookie } from '@/utils/types'
+import * as cookie from 'cookie'
+import { EAuthMessages } from '@/auth/messages'
+import { JwtService } from '@nestjs/jwt'
+import type { TNewMessage1v1 } from '@/message/types'
 
 @WebSocketGateway({
    cors: {
@@ -46,72 +47,104 @@ export class AppGateway
    implements
       OnGatewayConnection<TClientSocket>,
       OnGatewayDisconnect<TClientSocket>,
-      OnGatewayInit<Server>
+      OnGatewayInit<Server>,
+      IGateway
 {
-   @WebSocketServer()
-   server: Server
-
-   private readonly gatewaySession = new GatewaySession()
-
    constructor(
-      private gatewayService: GatewayService,
+      private socketService: SocketService,
       private friendService: FriendService,
-      private messageService: MessageService
+      private messageService: MessageService,
+      private jwtService: JwtService
    ) {}
 
-   afterInit(serverInit: Server) {
-      this.gatewayService.validateConnection(serverInit)
+   afterInit(server: Server) {
+      this.validateConnection(server)
    }
 
-   handleConnection(client: TClientSocket) {
-      console.log('>>> connected socket id:', client.id)
-      const { clientId } = client.handshake.auth
+   handleConnection(clientSocket: TClientSocket) {
+      console.log('>>> connected socket:', {
+         socketId: clientSocket.id,
+         auth: clientSocket.handshake.auth,
+      })
+      const { clientId } = clientSocket.handshake.auth
       if (clientId) {
-         this.gatewaySession.addClient(clientId, client)
-         client.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
+         this.socketService.addClientSession(clientId, clientSocket)
+         clientSocket.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
       } else {
-         client.disconnect(true)
+         clientSocket.disconnect(true)
       }
    }
 
-   handleDisconnect(client: TClientSocket) {
-      console.log('>>> discnn socket id:', client.id)
+   handleDisconnect(client: TClientSocket): void {
+      console.log('>>> discnn socket:', {
+         socketId: client.id,
+         auth: client.handshake.auth,
+      })
       const { clientId } = client.handshake.auth
-      this.gatewaySession.removeClient(clientId)
+      this.socketService.removeClientSession(clientId)
+   }
+
+   validateConnection(server: Server): void {
+      server.use(async (socket, next) => {
+         const clientCookie = socket.handshake.headers.cookie
+         if (!clientCookie) {
+            next(new Error(EAuthMessages.INVALID_CREDENTIALS))
+            return
+         }
+         const parsed_cookie = cookie.parse(clientCookie) as TClientCookie
+         const jwt = parsed_cookie[EClientCookieNames.JWT_TOKEN_AUTH]
+         try {
+            await this.jwtService.verifyAsync(jwt, {
+               secret: process.env.JWT_SECRET,
+            })
+         } catch (error) {
+            next(new Error(EAuthMessages.AUTHENTICATION_FAILED))
+            return
+         }
+         next()
+      })
+      this.socketService.setServer(server)
+   }
+
+   validateAuthOfClient(client: Socket): TClientAuth {
+      const { clientId } = client.handshake.auth
+      if (!clientId) {
+         throw new BaseWsException(EAuthMessages.INVALID_CREDENTIALS)
+      }
+      return { clientId }
    }
 
    @SubscribeMessage(EClientSocketEvents.send_message_1v1)
    @CatchSocketErrors()
-   async handleChatting(
+   async handleChatting1v1(
       @MessageBody() payload: ChattingPayloadDTO,
-      @ConnectedSocket() client: Socket
-   ): Promise<TSuccess> {
-      const { clientId } = this.gatewayService.validateAuthOfClient(client)
-      const { message, receiverId, conversationId } = payload
-      console.log('>>> stuff:', { clientId, receiverId })
+      @ConnectedSocket() client: Socket<IEmitSocketEvents>
+   ) {
+      const { clientId } = this.validateAuthOfClient(client)
+      const { message, receiverId } = payload
       const isFriend = await this.friendService.isFriend(clientId, receiverId)
       if (!isFriend) {
          throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
       }
-      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(receiverId)
-      if (!recipientSocket) {
-         throw new BaseWsException(EChattingMessages.RECIPIENT_NOT_FOUND)
-      }
-      const newMessage = await this.messageService.createNewMessage(
+      const { conversationId, token } = payload
+      const newMessage = await this.messageService.createNewMessageHandler(
+         token,
          message,
          clientId,
          conversationId
       )
-      recipientSocket.emit(EClientSocketEvents.send_message_1v1, newMessage)
-      return { success: true }
-   }
-
-   @OnEvent(EGatewayInternalEvents.send_friend_request, { async: true })
-   async sendFriendRequest(sender: TUserWithProfile, recipientId: number): Promise<void> {
-      const recipientSocket = this.gatewaySession.getClient<IEmitSocketEvents>(recipientId)
-      if (!recipientSocket) {
-         throw new BaseWsException(EChattingMessages.RECIPIENT_NOT_FOUND)
+      const newMsg1v1Payload: TNewMessage1v1 = {
+         id: newMessage.id,
+         authorId: clientId,
+         content: message,
+         conversationId,
+         createdAt: newMessage.createdAt,
       }
-      recipientSocket.emit(EClientSocketEvents.send_friend_request, sender)
+      const recipientSocket = this.socketService.getClientSession<IEmitSocketEvents>(receiverId)
+      if (recipientSocket) {
+         recipientSocket.emit(EClientSocketEvents.send_message_1v1, newMsg1v1Payload)
+      }
+      client.emit(EClientSocketEvents.send_message_1v1, newMsg1v1Payload)
+      return { success: true }
    }
 }

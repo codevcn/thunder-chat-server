@@ -1,14 +1,7 @@
-import type {
-   TStartConversationParams,
-   TSearchConversationParams,
-   TFindConversationParams,
-   TFindConversationData,
-   TStartConversationData,
-} from './types'
+import type { TFindConversationData, TStartConversationData } from './types'
 import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
-import type { TUserWithProfile } from '@/utils/entities/user.entity'
 
 @Injectable()
 export class ConversationService {
@@ -50,10 +43,10 @@ export class ConversationService {
    //    return user
    // }
 
-   async findConversation({
-      recipientId,
-      creatorId,
-   }: TFindConversationParams): Promise<TFindConversationData | null> {
+   async findConversation(
+      recipientId: number,
+      creatorId: number
+   ): Promise<TFindConversationData | null> {
       return await this.prismaService.conversation.findFirst({
          where: {
             creatorId,
@@ -82,15 +75,14 @@ export class ConversationService {
       })
    }
 
-   async startConversation({
-      recipientId,
-      creatorId,
-   }: TStartConversationParams): Promise<TStartConversationData> {
-      const exist_conversation = await this.findConversation({ recipientId, creatorId })
+   async startConversation(
+      recipientId: number,
+      creatorId: number
+   ): Promise<TStartConversationData> {
+      const exist_conversation = await this.findConversation(recipientId, creatorId)
       if (exist_conversation) {
          return exist_conversation
       }
-
       return await this.prismaService.conversation.create({
          data: {
             creatorId,

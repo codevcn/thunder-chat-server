@@ -1,6 +1,7 @@
-import { IsEmail, IsISO8601, IsNotEmpty, MinLength } from 'class-validator'
+import { IsEmail, IsISO8601, IsNotEmpty, IsNumber, IsOptional, MinLength } from 'class-validator'
 import { ELengths } from '@/utils/enums'
 import { EValidationMessages } from '@/utils/validation/messages'
+import { Type } from 'class-transformer'
 
 export class CreateUserDTO {
    @IsNotEmpty()
@@ -30,4 +31,14 @@ export class GetUserByEmailDTO {
 export class SearchUsersDTO {
    @IsNotEmpty()
    keyword: string
+
+   @IsNotEmpty()
+   @IsNumber()
+   @Type(() => Number)
+   limit: number
+
+   @IsOptional()
+   @IsNumber()
+   @Type(() => Number)
+   lastUserId?: number
 }
