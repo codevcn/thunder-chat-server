@@ -1,7 +1,7 @@
 export enum ERoutes {
    AUTH = 'auth',
    USER = 'user',
-   CONVERSATIONS = 'conversations',
+   DIRECT_CHAT = 'direct-chat',
    MESSAGE = 'message',
    FRIEND = 'friend',
 }

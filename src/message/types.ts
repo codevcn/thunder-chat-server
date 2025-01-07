@@ -1,9 +1,17 @@
 export type TMsgToken = string
 
-export type TNewMessage1v1 = {
+export type TNewDirectMessage = {
    id: number
    content: string
    authorId: number
-   conversationId: number
+   directChatId: number
+   createdAt: Date
+}
+
+export type TNewGroupMessage = {
+   id: number
+   content: string
+   authorId: number
+   directChatId: number
    createdAt: Date
 }

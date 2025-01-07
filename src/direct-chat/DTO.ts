@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty, IsNumber, IsOptional } from 'class-validator'
 import { Type } from 'class-transformer'
 
-export class SearchConversationDTO {
+export class SearchDirectChatDTO {
    @IsEmail()
    @IsOptional()
    email: string
@@ -13,14 +13,14 @@ export class SearchConversationDTO {
    nameOfUser: string
 }
 
-export class CreateConversationDTO {
+export class CreateDirectChatDTO {
    @IsNotEmpty()
    @IsNumber()
    @Type(() => Number)
    recipientId: number
 }
 
-export class FetchConversationDTO {
+export class FetchDirectChatDTO {
    @IsNotEmpty()
    @IsNumber()
    @Type(() => Number)

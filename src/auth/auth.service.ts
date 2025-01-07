@@ -4,7 +4,17 @@ import { JWTService } from './jwt.service'
 import { CredentialService } from './credential.service'
 import { Response } from 'express'
 import type { TLoginUserParams } from './types'
-import { EAuthMessages } from './messages'
+import { Server } from 'socket.io'
+import { EClientCookieNames } from '@/utils/enums'
+import type { TClientCookie } from '@/utils/types'
+import * as cookie from 'cookie'
+import { EAuthMessages } from '@/auth/messages'
+import { BaseWsException } from '@/utils/exceptions/base-ws.exception'
+import { EValidationMessages } from '@/utils/validation/messages'
+import { ClientSocketAuthDTO } from '@/gateway/DTO'
+import type { TClientSocket } from '@/gateway/types'
+import { plainToInstance } from 'class-transformer'
+import { validate } from 'class-validator'
 
 @Injectable()
 export class AuthService {
@@ -35,5 +45,33 @@ export class AuthService {
 
    async logoutUser(res: Response): Promise<void> {
       await this.jwtService.removeJWT({ response: res })
+   }
+
+   async validateSocketConnection(server: Server): Promise<void> {
+      server.use(async (socket, next) => {
+         const clientCookie = socket.handshake.headers.cookie
+         if (!clientCookie) {
+            next(new Error(EAuthMessages.INVALID_CREDENTIALS))
+            return
+         }
+         const parsed_cookie = cookie.parse(clientCookie) as TClientCookie
+         const jwt = parsed_cookie[EClientCookieNames.JWT_TOKEN_AUTH]
+         try {
+            await this.jwtService.verifyToken(jwt)
+         } catch (error) {
+            next(new Error(EAuthMessages.AUTHENTICATION_FAILED))
+            return
+         }
+         next()
+      })
+   }
+
+   async validateSocketAuth(clientSocket: TClientSocket): Promise<ClientSocketAuthDTO> {
+      const socketAuth = plainToInstance(ClientSocketAuthDTO, clientSocket.handshake.auth)
+      const errors = await validate(socketAuth)
+      if (errors && errors.length > 0) {
+         throw new BaseWsException(EValidationMessages.INVALID_INPUT)
+      }
+      return socketAuth
    }
 }

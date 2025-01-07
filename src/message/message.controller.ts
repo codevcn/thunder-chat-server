@@ -7,8 +7,8 @@ import { IMessageController } from './interfaces'
 export class MessageController implements IMessageController {
    constructor(private messageService: MessageService) {}
 
-   @Get('messages/:conversationId')
-   async fetchMessages(@Param('conversationId') conversationId: string) {
-      return await this.messageService.findMessagesByConversationId(parseInt(conversationId, 10))
+   @Get('messages/:directChatId')
+   async fetchMessages(@Param('directChatId') directChatId: string) {
+      return await this.messageService.findMessagesByDirectChatId(parseInt(directChatId, 10))
    }
 }

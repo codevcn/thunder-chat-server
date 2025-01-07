@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
-import { ConversationsModule } from './conversation/conversation.module'
+import { DirectChatsModule } from './direct-chat/direct-chat.module'
 import { MessageModule } from './message/message.module'
 import { PrismaModule } from './utils/ORM/prisma.module'
 import { envValidation } from './utils/validation/env.validation'
@@ -35,7 +35,7 @@ import { GatewayModule } from './gateway/gateway.module'
       ...globalConfigModules,
       AuthModule,
       GatewayModule,
-      ConversationsModule,
+      DirectChatsModule,
       MessageModule,
       UserModule,
       FriendModule,

@@ -20,15 +20,15 @@ export class FriendService {
    ) {}
 
    async isFriend(userId: number, personId: number): Promise<boolean> {
-      const isFriend = await this.prismaService.friend.findFirst({
+      const friendship = await this.prismaService.friend.findFirst({
          where: {
             OR: [
-               { AND: [{ senderId: userId }, { recipientId: personId }] },
-               { AND: [{ senderId: personId }, { recipientId: userId }] },
+               { senderId: userId, recipientId: personId },
+               { senderId: personId, recipientId: userId },
             ],
          },
       })
-      return isFriend ? true : false
+      return !!friendship
    }
 
    async create(senderId: number, recipientId: number): Promise<TFriendRequest> {
@@ -171,7 +171,7 @@ export class FriendService {
          take: limit,
          ...cursor,
          where: {
-            senderId: userId,
+            OR: [{ recipientId: userId }, { senderId: userId }],
          },
          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
          select: {

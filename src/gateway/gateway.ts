@@ -6,10 +6,9 @@ import {
 } from '@nestjs/websockets'
 import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@nestjs/websockets'
 import { Server } from 'socket.io'
-import type { Socket } from 'socket.io'
 import { EClientSocketEvents, EInitEvents } from './events'
-import { EChattingMessages, ESocketNamespaces } from './enums'
-import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
+import { ESocketNamespaces } from './enums'
+import { HttpStatus, UseFilters, UseGuards, UsePipes } from '@nestjs/common'
 import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
 import { EFriendMessages } from '@/friend/messages'
@@ -17,19 +16,17 @@ import {
    CatchSocketErrors,
    BaseWsExceptionsFilter,
 } from '@/utils/exceptions/base-ws-exception.filter'
-import type { TSuccess } from '@/utils/types'
 import { MessageService } from '@/message/messages.service'
 import type { TClientAuth, TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
 import { ChattingPayloadDTO } from './DTO'
-import { EClientCookieNames } from '@/utils/enums'
-import type { TClientCookie } from '@/utils/types'
-import * as cookie from 'cookie'
-import { EAuthMessages } from '@/auth/messages'
 import { JwtService } from '@nestjs/jwt'
-import type { TNewMessage1v1 } from '@/message/types'
+import type { TNewDirectMessage } from '@/message/types'
+import { ClientSocketAuthGuard } from './gateway.guard'
+import { EMsgMessages } from '@/message/messages'
+import { AuthService } from '@/auth/auth.service'
 
 @WebSocketGateway({
    cors: {
@@ -54,97 +51,101 @@ export class AppGateway
       private socketService: SocketService,
       private friendService: FriendService,
       private messageService: MessageService,
-      private jwtService: JwtService
+      private authService: AuthService
    ) {}
 
-   afterInit(server: Server) {
-      this.validateConnection(server)
+   afterInit(server: Server): void {
+      this.authService.validateSocketConnection(server)
+      this.socketService.setServer(server)
    }
 
-   handleConnection(clientSocket: TClientSocket) {
+   async handleConnection(clientSocket: TClientSocket): Promise<void> {
       console.log('>>> connected socket:', {
          socketId: clientSocket.id,
          auth: clientSocket.handshake.auth,
       })
-      const { clientId } = clientSocket.handshake.auth
+      const { clientId, messageOffset, directChatId, groupId } =
+         await this.authService.validateSocketAuth(clientSocket)
       if (clientId) {
          this.socketService.addClientSession(clientId, clientSocket)
          clientSocket.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
+         if (messageOffset) {
+            await this.recoverMissingMessages(clientSocket, messageOffset, directChatId, groupId)
+         }
       } else {
          clientSocket.disconnect(true)
       }
    }
 
-   handleDisconnect(client: TClientSocket): void {
+   async handleDisconnect(client: TClientSocket): Promise<void> {
       console.log('>>> discnn socket:', {
          socketId: client.id,
          auth: client.handshake.auth,
       })
       const { clientId } = client.handshake.auth
-      this.socketService.removeClientSession(clientId)
-   }
-
-   validateConnection(server: Server): void {
-      server.use(async (socket, next) => {
-         const clientCookie = socket.handshake.headers.cookie
-         if (!clientCookie) {
-            next(new Error(EAuthMessages.INVALID_CREDENTIALS))
-            return
-         }
-         const parsed_cookie = cookie.parse(clientCookie) as TClientCookie
-         const jwt = parsed_cookie[EClientCookieNames.JWT_TOKEN_AUTH]
-         try {
-            await this.jwtService.verifyAsync(jwt, {
-               secret: process.env.JWT_SECRET,
-            })
-         } catch (error) {
-            next(new Error(EAuthMessages.AUTHENTICATION_FAILED))
-            return
-         }
-         next()
-      })
-      this.socketService.setServer(server)
-   }
-
-   validateAuthOfClient(client: Socket): TClientAuth {
-      const { clientId } = client.handshake.auth
-      if (!clientId) {
-         throw new BaseWsException(EAuthMessages.INVALID_CREDENTIALS)
+      if (clientId) {
+         this.socketService.removeClientSession(clientId)
+         this.messageService.removeToken(clientId)
       }
-      return { clientId }
    }
 
-   @SubscribeMessage(EClientSocketEvents.send_message_1v1)
+   async recoverMissingMessages(
+      clientSocket: TClientSocket,
+      messageOffset: Date,
+      directChatId?: number,
+      groupId?: number
+   ): Promise<void> {
+      if (directChatId) {
+         const messages = await this.messageService.findDirectMessagesByOffset(
+            messageOffset,
+            directChatId
+         )
+         console.log('>>> recover messages:', messages)
+         if (messages && messages.length > 0) {
+            clientSocket.emit(
+               EClientSocketEvents.recovered_connection,
+               messages as TNewDirectMessage[]
+            )
+         }
+      }
+   }
+
+   @SubscribeMessage(EClientSocketEvents.send_message_direct)
+   @UseGuards(ClientSocketAuthGuard)
    @CatchSocketErrors()
-   async handleChatting1v1(
+   async handleChattingDirect(
       @MessageBody() payload: ChattingPayloadDTO,
-      @ConnectedSocket() client: Socket<IEmitSocketEvents>
+      @ConnectedSocket() client: TClientSocket
    ) {
-      const { clientId } = this.validateAuthOfClient(client)
-      const { message, receiverId } = payload
+      const { clientId } = client.handshake.auth
+      console.log('>>> stuff:', { ...payload, clientId })
+      const { message, receiverId, token } = payload
+      if (!this.messageService.isFirstMessage(clientId, token)) {
+         throw new BaseWsException(EMsgMessages.MESSAGE_OVERLAPS)
+      }
       const isFriend = await this.friendService.isFriend(clientId, receiverId)
       if (!isFriend) {
          throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
       }
-      const { conversationId, token } = payload
-      const newMessage = await this.messageService.createNewMessageHandler(
-         token,
+      const { directChatId, timestamp } = payload
+      const newMessage = await this.messageService.createNewMessage(
          message,
          clientId,
-         conversationId
+         timestamp,
+         directChatId
       )
-      const newMsg1v1Payload: TNewMessage1v1 = {
+      const newMsgDirectPayload: TNewDirectMessage = {
          id: newMessage.id,
          authorId: clientId,
          content: message,
-         conversationId,
+         directChatId,
          createdAt: newMessage.createdAt,
       }
       const recipientSocket = this.socketService.getClientSession<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
-         recipientSocket.emit(EClientSocketEvents.send_message_1v1, newMsg1v1Payload)
+         recipientSocket.emit(EClientSocketEvents.send_message_direct, newMsgDirectPayload)
       }
-      client.emit(EClientSocketEvents.send_message_1v1, newMsg1v1Payload)
+      client.emit(EClientSocketEvents.send_message_direct, newMsgDirectPayload)
       return { success: true }
    }
 }

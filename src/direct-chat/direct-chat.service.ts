@@ -1,18 +1,18 @@
-import type { TFindConversationData, TStartConversationData } from './types'
+import type { TFindDirectChatData, TStartDirectChatData } from './types'
 import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/utils/ORM/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 
 @Injectable()
-export class ConversationService {
+export class DirectChatService {
    constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
 
-   // async searchConversation({
+   // async searchDirectChat({
    //    email,
    //    username,
    //    nameOfUser,
    //    creatorId,
-   // }: TSearchConversationParams): Promise<TUserWithProfile[]> {
+   // }: TSearchDirectChatParams): Promise<TUserWithProfile[]> {
    //    const user = await this.prismaService.user.findMany({
    //       where: {
    //          OR: [{ email }, { username }],
@@ -43,11 +43,11 @@ export class ConversationService {
    //    return user
    // }
 
-   async findConversation(
+   async findDirectChat(
       recipientId: number,
       creatorId: number
-   ): Promise<TFindConversationData | null> {
-      return await this.prismaService.conversation.findFirst({
+   ): Promise<TFindDirectChatData | null> {
+      return await this.prismaService.directChat.findFirst({
          where: {
             creatorId,
             recipientId,
@@ -62,8 +62,8 @@ export class ConversationService {
       })
    }
 
-   async findConversationById(id: number): Promise<TFindConversationData | null> {
-      return await this.prismaService.conversation.findUnique({
+   async findDirectChatById(id: number): Promise<TFindDirectChatData | null> {
+      return await this.prismaService.directChat.findUnique({
          where: { id },
          include: {
             Recipient: {
@@ -75,15 +75,12 @@ export class ConversationService {
       })
    }
 
-   async startConversation(
-      recipientId: number,
-      creatorId: number
-   ): Promise<TStartConversationData> {
-      const exist_conversation = await this.findConversation(recipientId, creatorId)
+   async startDirectChat(recipientId: number, creatorId: number): Promise<TStartDirectChatData> {
+      const exist_conversation = await this.findDirectChat(recipientId, creatorId)
       if (exist_conversation) {
          return exist_conversation
       }
-      return await this.prismaService.conversation.create({
+      return await this.prismaService.directChat.create({
          data: {
             creatorId,
             recipientId,

@@ -36,9 +36,6 @@ export function CatchSocketErrors() {
             // call original function
             return await originalMethod.apply(this, args)
          } catch (error) {
-            if (!(error instanceof BaseWsException)) {
-               throw error
-            }
             // return error data to client
             return {
                isError: true,

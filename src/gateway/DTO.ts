@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator'
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
 
 export class ChattingPayloadDTO {
    @IsNumber()
@@ -12,9 +12,35 @@ export class ChattingPayloadDTO {
    @IsNumber()
    @IsNotEmpty()
    @Type(() => Number)
-   conversationId: number
+   directChatId: number
 
    @IsNotEmpty()
    @IsString()
    token: string
+
+   @IsNotEmpty()
+   @IsDate()
+   @Type(() => Date)
+   timestamp: Date
+}
+
+export class ClientSocketAuthDTO {
+   @IsNumber()
+   @Type(() => Number)
+   clientId: number
+
+   @IsOptional()
+   @IsDate()
+   @Type(() => Date)
+   messageOffset?: Date
+
+   @IsOptional()
+   @IsNumber()
+   @Type(() => Number)
+   directChatId?: number
+
+   @IsOptional()
+   @IsNumber()
+   @Type(() => Number)
+   groupId?: number
 }

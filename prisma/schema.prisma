@@ -15,14 +15,14 @@ model User {
     username  String?  @unique
     createdAt DateTime @default(now()) @map("created_at")
 
-    Profile                  Profile?
-    CreatorsOnConversation   Conversation[]  @relation("CreatorOnConversation")
-    RecipientsOnConversation Conversation[]  @relation("RecipientOnConversation")
-    Messages                 Message[]       @relation("AuthorOnMessage")
-    FriendRecipient          Friend[]        @relation("RecipientOnFriend")
-    FriendSender             Friend[]        @relation("SenderOnFriend")
-    FriendRequestsSender     FriendRequest[] @relation("SenderOnFriendRequests")
-    FriendRequestsRecipient  FriendRequest[] @relation("RecipientOnFriendRequests")
+    Profile                 Profile?
+    CreatorsOnDirectChat    DirectChat[]    @relation("CreatorOnDirectChat")
+    RecipientsOnDirectChat  DirectChat[]    @relation("RecipientOnDirectChat")
+    Messages                Message[]       @relation("AuthorOnMessage")
+    FriendRecipient         Friend[]        @relation("RecipientOnFriend")
+    FriendSender            Friend[]        @relation("SenderOnFriend")
+    FriendRequestsSender    FriendRequest[] @relation("SenderOnFriendRequests")
+    FriendRequestsRecipient FriendRequest[] @relation("RecipientOnFriendRequests")
 
     @@map("users")
 }
@@ -41,31 +41,31 @@ model Profile {
     @@map("profiles")
 }
 
-model Conversation {
+model DirectChat {
     id          Int      @id @default(autoincrement())
     creatorId   Int      @map("creator_id")
     recipientId Int      @map("recipient_id")
     createdAt   DateTime @default(now()) @map("created_at")
 
-    Recipient User      @relation("RecipientOnConversation", fields: [recipientId], references: [id])
-    Creator   User      @relation("CreatorOnConversation", fields: [creatorId], references: [id])
-    Messages  Message[] @relation("MessagesOnConversation")
+    Recipient User      @relation("RecipientOnDirectChat", fields: [recipientId], references: [id])
+    Creator   User      @relation("CreatorOnDirectChat", fields: [creatorId], references: [id])
+    Messages  Message[] @relation("MessagesOnDirectChat")
 
     @@unique([creatorId, recipientId])
-    @@map("conversations")
+    @@map("direct_chats")
 }
 
 model Message {
-    id             Int      @id @default(autoincrement())
-    content        String
-    authorId       Int      @map("author_id")
-    conversationId Int?     @map("conversation_id")
-    groupId        Int?     @map("group_id")
-    createdAt      DateTime @default(now()) @map("created_at")
+    id           Int      @id @default(autoincrement())
+    content      String
+    authorId     Int      @map("author_id")
+    directChatId Int?     @map("direct_chat_id")
+    groupChatId  Int?     @map("group_chat_id")
+    createdAt    DateTime @default(now()) @map("created_at")
 
-    Conversation Conversation? @relation("MessagesOnConversation", fields: [conversationId], references: [id])
-    Group        Group?        @relation("MessagesOnGroup", fields: [groupId], references: [id])
-    Author       User          @relation("AuthorOnMessage", fields: [authorId], references: [id])
+    DirectChat DirectChat? @relation("MessagesOnDirectChat", fields: [directChatId], references: [id])
+    GroupChat  GroupChat?  @relation("MessagesOnGroupChat", fields: [groupChatId], references: [id])
+    Author     User        @relation("AuthorOnMessage", fields: [authorId], references: [id])
 
     @@map("messages")
 }
@@ -97,12 +97,12 @@ model FriendRequest {
     @@map("friend_requests")
 }
 
-model Group {
+model GroupChat {
     id Int @id @default(autoincrement())
 
-    Message Message[] @relation("MessagesOnGroup")
+    Message Message[] @relation("MessagesOnGroupChat")
 
-    @@map("groups")
+    @@map("group_chats")
 }
 
 enum FriendRequestsStatus {

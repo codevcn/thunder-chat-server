@@ -4,17 +4,18 @@ import { EProviderTokens } from '@/utils/enums'
 import type { TMessage } from '@/utils/entities/message.entity'
 import type { TMsgToken } from './types'
 import { EMsgMessages } from './messages'
+import type { TUserId } from '@/gateway/types'
 
 @Injectable()
 export class MessageService {
-   private readonly uniqueMsgTokens = new Set<TMsgToken>()
+   private uniqueMsgTokens = new Map<TUserId, TMsgToken>()
 
    constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
 
-   async findMessagesByConversationId(conversationId: number): Promise<TMessage[]> {
+   async findMessagesByDirectChatId(directChatId: number): Promise<TMessage[]> {
       return await this.prismaService.message.findMany({
          where: {
-            conversationId,
+            directChatId,
          },
       })
    }
@@ -22,19 +23,21 @@ export class MessageService {
    async createNewMessage(
       content: string,
       authorId: number,
-      conversationId?: number,
+      timestamp: Date,
+      directChatId?: number,
       groupId?: number
    ): Promise<TMessage> {
-      if (!groupId && !conversationId) {
+      if (!groupId && !directChatId) {
          throw new BadRequestException(EMsgMessages.CONVERSATION_ID_NOT_FOUND)
       }
       return await this.prismaService.message.create({
          data: {
             content,
             authorId,
-            ...(conversationId
+            createdAt: timestamp,
+            ...(directChatId
                ? {
-                    conversationId,
+                    directChatId,
                  }
                : {
                     groupId,
@@ -43,16 +46,39 @@ export class MessageService {
       })
    }
 
-   async createNewMessageHandler(
-      token: string,
-      content: string,
-      authorId: number,
-      conversationId?: number,
-      groupId?: number
-   ): Promise<TMessage> {
-      if (this.uniqueMsgTokens.has(token)) {
-         throw new BadRequestException(EMsgMessages.MESSAGE_OVERLAPS)
+   printOutTokens(): void {
+      for (const [key, value] of this.uniqueMsgTokens) {
+         console.log(`>>> key: ${key} - something: ${value}`)
       }
-      return await this.createNewMessage(content, authorId, conversationId, groupId)
+   }
+
+   isFirstMessage(userId: TUserId, token: TMsgToken): boolean {
+      this.printOutTokens()
+      if (this.uniqueMsgTokens.get(userId) === token) {
+         return false
+      }
+      this.uniqueMsgTokens.set(userId, token)
+      return true
+   }
+
+   removeToken(userId: TUserId): void {
+      this.uniqueMsgTokens.delete(userId)
+   }
+
+   async findDirectMessagesByOffset(
+      messageOffset: Date,
+      directChatId: number
+   ): Promise<TMessage[]> {
+      return await this.prismaService.message.findMany({
+         where: {
+            createdAt: {
+               gt: messageOffset,
+            },
+            directChatId,
+         },
+         orderBy: {
+            createdAt: 'asc',
+         },
+      })
    }
 }

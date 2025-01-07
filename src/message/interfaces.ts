@@ -1,5 +1,5 @@
 import { TMessage } from '@/utils/entities/message.entity'
 
 export interface IMessageController {
-   fetchMessages: (conversationId: string) => Promise<TMessage[]>
+   fetchMessages: (directChatId: string) => Promise<TMessage[]>
 }
