@@ -1,5 +1,3 @@
-export type TMsgToken = string
-
 export type TNewDirectMessage = {
    id: number
    content: string

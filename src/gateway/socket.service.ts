@@ -19,15 +19,15 @@ export class SocketService {
       return this.server
    }
 
-   addClientSession(clientId: TUserId, client: Socket): void {
+   addConnectedClient(clientId: TUserId, client: Socket): void {
       this.connectedClients.set(clientId, client)
    }
 
-   getClientSession<T extends EventsMap = EventsMap>(clientId: TUserId): Socket<T> | null {
+   getConnectedClient<T extends EventsMap = EventsMap>(clientId: TUserId): Socket<T> | null {
       return this.connectedClients.get(clientId) || null
    }
 
-   removeClientSession(clientId: TUserId): void {
+   removeConnectedClient(clientId: TUserId): void {
       this.connectedClients.delete(clientId)
    }
 
@@ -38,7 +38,7 @@ export class SocketService {
    }
 
    async sendFriendRequest(sender: TUserWithProfile, recipientSocketId: TUserId): Promise<void> {
-      const recipientSocket = this.getClientSession<IEmitSocketEvents>(recipientSocketId)
+      const recipientSocket = this.getConnectedClient<IEmitSocketEvents>(recipientSocketId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.send_friend_request, sender)
       }

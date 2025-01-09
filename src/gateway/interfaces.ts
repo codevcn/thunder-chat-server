@@ -15,7 +15,7 @@ export interface IEmitSocketEvents {
 }
 
 export interface IGateway {
-   handleChattingDirect: (
+   handleDirectChatting: (
       payload: ChattingPayloadDTO,
       client: Socket<IEmitSocketEvents>
    ) => Promise<TSuccess>

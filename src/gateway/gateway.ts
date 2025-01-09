@@ -8,7 +8,7 @@ import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@n
 import { Server } from 'socket.io'
 import { EClientSocketEvents, EInitEvents } from './events'
 import { ESocketNamespaces } from './enums'
-import { HttpStatus, UseFilters, UseGuards, UsePipes } from '@nestjs/common'
+import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
 import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
 import { EFriendMessages } from '@/friend/messages'
@@ -17,16 +17,17 @@ import {
    BaseWsExceptionsFilter,
 } from '@/utils/exceptions/base-ws-exception.filter'
 import { MessageService } from '@/message/messages.service'
-import type { TClientAuth, TClientSocket } from './types'
+import type { TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
 import { ChattingPayloadDTO } from './DTO'
-import { JwtService } from '@nestjs/jwt'
 import type { TNewDirectMessage } from '@/message/types'
-import { ClientSocketAuthGuard } from './gateway.guard'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
+import { MessageTokensManager } from '@/gateway/message-tokens'
+import { MessagesQueue } from './messages-queue'
+import type { TSuccess } from '@/utils/types'
 
 @WebSocketGateway({
    cors: {
@@ -47,6 +48,9 @@ export class AppGateway
       OnGatewayInit<Server>,
       IGateway
 {
+   private readonly messageTokensManager = new MessageTokensManager()
+   private readonly messagesQueue = new MessagesQueue()
+
    constructor(
       private socketService: SocketService,
       private friendService: FriendService,
@@ -59,21 +63,21 @@ export class AppGateway
       this.socketService.setServer(server)
    }
 
-   async handleConnection(clientSocket: TClientSocket): Promise<void> {
+   async handleConnection(client: TClientSocket): Promise<void> {
       console.log('>>> connected socket:', {
-         socketId: clientSocket.id,
-         auth: clientSocket.handshake.auth,
+         socketId: client.id,
+         auth: client.handshake.auth,
       })
       const { clientId, messageOffset, directChatId, groupId } =
-         await this.authService.validateSocketAuth(clientSocket)
+         await this.authService.validateSocketAuth(client)
       if (clientId) {
-         this.socketService.addClientSession(clientId, clientSocket)
-         clientSocket.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
+         this.socketService.addConnectedClient(clientId, client)
+         client.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
          if (messageOffset) {
-            await this.recoverMissingMessages(clientSocket, messageOffset, directChatId, groupId)
+            await this.recoverMissingMessages(client, messageOffset, directChatId, groupId)
          }
       } else {
-         clientSocket.disconnect(true)
+         client.disconnect(true)
       }
    }
 
@@ -84,8 +88,8 @@ export class AppGateway
       })
       const { clientId } = client.handshake.auth
       if (clientId) {
-         this.socketService.removeClientSession(clientId)
-         this.messageService.removeToken(clientId)
+         this.socketService.removeConnectedClient(clientId)
+         this.messageTokensManager.removeAllTokens(clientId)
       }
    }
 
@@ -111,41 +115,42 @@ export class AppGateway
    }
 
    @SubscribeMessage(EClientSocketEvents.send_message_direct)
-   @UseGuards(ClientSocketAuthGuard)
-   @CatchSocketErrors()
-   async handleChattingDirect(
+   async handleDirectChatting(
       @MessageBody() payload: ChattingPayloadDTO,
       @ConnectedSocket() client: TClientSocket
    ) {
-      const { clientId } = client.handshake.auth
+      const { clientId } = this.authService.validateSocketAuthSync(client)
       console.log('>>> stuff:', { ...payload, clientId })
-      const { message, receiverId, token } = payload
-      if (!this.messageService.isFirstMessage(clientId, token)) {
-         throw new BaseWsException(EMsgMessages.MESSAGE_OVERLAPS)
-      }
-      const isFriend = await this.friendService.isFriend(clientId, receiverId)
-      if (!isFriend) {
-         throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
-      }
-      const { directChatId, timestamp } = payload
-      const newMessage = await this.messageService.createNewMessage(
-         message,
-         clientId,
-         timestamp,
-         directChatId
-      )
-      const newMsgDirectPayload: TNewDirectMessage = {
-         id: newMessage.id,
-         authorId: clientId,
-         content: message,
-         directChatId,
-         createdAt: newMessage.createdAt,
-      }
-      const recipientSocket = this.socketService.getClientSession<IEmitSocketEvents>(receiverId)
-      if (recipientSocket) {
-         recipientSocket.emit(EClientSocketEvents.send_message_direct, newMsgDirectPayload)
-      }
-      client.emit(EClientSocketEvents.send_message_direct, newMsgDirectPayload)
+      await this.messagesQueue.addExecution(clientId, async () => {
+         const { message, receiverId, token } = payload
+         if (!this.messageTokensManager.isUniqueToken(clientId, token)) {
+            throw new BaseWsException(EMsgMessages.MESSAGE_OVERLAPS)
+         }
+         const isFriend = await this.friendService.isFriend(clientId, receiverId)
+         if (!isFriend) {
+            throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
+         }
+         const { directChatId, timestamp } = payload
+         const newMessage = await this.messageService.createNewMessage(
+            message,
+            clientId,
+            timestamp,
+            directChatId
+         )
+         const newDirectMsgPayload: TNewDirectMessage = {
+            id: newMessage.id,
+            authorId: clientId,
+            content: message,
+            directChatId,
+            createdAt: timestamp,
+         }
+         const recipientSocket =
+            this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
+         if (recipientSocket) {
+            recipientSocket.emit(EClientSocketEvents.send_message_direct, newDirectMsgPayload)
+         }
+         client.emit(EClientSocketEvents.send_message_direct, newDirectMsgPayload)
+      })
       return { success: true }
    }
 }

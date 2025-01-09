@@ -11,10 +11,10 @@ import * as cookie from 'cookie'
 import { EAuthMessages } from '@/auth/messages'
 import { BaseWsException } from '@/utils/exceptions/base-ws.exception'
 import { EValidationMessages } from '@/utils/validation/messages'
-import { ClientSocketAuthDTO } from '@/gateway/DTO'
+import { ClientSocketAuthDTO } from './DTO'
 import type { TClientSocket } from '@/gateway/types'
 import { plainToInstance } from 'class-transformer'
-import { validate } from 'class-validator'
+import { validate, validateSync } from 'class-validator'
 
 @Injectable()
 export class AuthService {
@@ -69,6 +69,15 @@ export class AuthService {
    async validateSocketAuth(clientSocket: TClientSocket): Promise<ClientSocketAuthDTO> {
       const socketAuth = plainToInstance(ClientSocketAuthDTO, clientSocket.handshake.auth)
       const errors = await validate(socketAuth)
+      if (errors && errors.length > 0) {
+         throw new BaseWsException(EValidationMessages.INVALID_INPUT)
+      }
+      return socketAuth
+   }
+
+   validateSocketAuthSync(clientSocket: TClientSocket): ClientSocketAuthDTO {
+      const socketAuth = plainToInstance(ClientSocketAuthDTO, clientSocket.handshake.auth)
+      const errors = validateSync(socketAuth)
       if (errors && errors.length > 0) {
          throw new BaseWsException(EValidationMessages.INVALID_INPUT)
       }
