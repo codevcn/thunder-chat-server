@@ -42,8 +42,8 @@ export class MessagesQueue {
          if (task) {
             try {
                await task()
-            } finally {
-               await this.processQueue(userId)
+            } catch (error) {
+               console.log('>>> error:', error)
             }
          }
          await this.processQueue(userId)
