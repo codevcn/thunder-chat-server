@@ -1,4 +1,4 @@
-export type TNewDirectMessage = {
+export type TDirectMessage = {
    id: number
    content: string
    authorId: number
@@ -12,4 +12,9 @@ export type TNewGroupMessage = {
    authorId: number
    directChatId: number
    createdAt: Date
+}
+
+export type TGetDirectMessagesData = {
+   hasMoreMessages: boolean
+   directMessages: TDirectMessage[]
 }

@@ -1,14 +1,16 @@
 import { MessageService } from '@/message/messages.service'
 import { ERoutes } from '@/utils/enums'
-import { Controller, Get, Param } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { IMessageController } from './interfaces'
+import { GetDirectMsgsParamsDTO } from './DTO'
 
 @Controller(ERoutes.MESSAGE)
 export class MessageController implements IMessageController {
    constructor(private messageService: MessageService) {}
 
-   @Get('messages/:directChatId')
-   async fetchMessages(@Param('directChatId') directChatId: string) {
-      return await this.messageService.findMessagesByDirectChatId(parseInt(directChatId, 10))
+   @Get('get-direct-messages')
+   async fetchMessages(@Query() params: GetDirectMsgsParamsDTO) {
+      const { directChatId, msgTime, limit, sortType } = params
+      return await this.messageService.getDirectMessages(msgTime, directChatId, limit, sortType)
    }
 }

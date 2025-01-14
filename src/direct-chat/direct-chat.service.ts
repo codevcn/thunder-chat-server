@@ -1,6 +1,6 @@
 import type { TFindDirectChatData, TStartDirectChatData } from './types'
 import { Inject, Injectable } from '@nestjs/common'
-import { PrismaService } from '@/utils/ORM/prisma.service'
+import { PrismaService } from '@/configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 
 @Injectable()

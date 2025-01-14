@@ -1,4 +1,4 @@
-import { PrismaService } from '@/utils/ORM/prisma.service'
+import { PrismaService } from '@/configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import { Global, Module, Provider } from '@nestjs/common'
 
@@ -9,7 +9,6 @@ const prisma_provider: Provider = {
 
 @Global()
 @Module({
-   imports: [],
    providers: [prisma_provider],
    exports: [prisma_provider],
 })

@@ -1,11 +1,13 @@
--- $1 is ourself id (senderId), $2 is friend id (recipientId)
+-- @param {Int} $1:myself_id
+-- @param {Int} $2:friend_id
+
 SELECT COUNT(f.id) as "mutualFriends"
-FROM friend f
+FROM friends f
 WHERE
     f.sender_id = $2
     AND f.recipient_id IN (
         SELECT fr.recipient_id
-        FROM friend fr
+        FROM friends fr
         WHERE
             fr.sender_id = $1
     );

@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, Inject } from '@nestjs/common'
 import type { TCreateUserParams, TSearchUsersData, TSearchProfilesData } from './types'
-import { PrismaService } from '../utils/ORM/prisma.service'
+import { PrismaService } from '../configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
 import { CredentialService } from '@/auth/credential.service'

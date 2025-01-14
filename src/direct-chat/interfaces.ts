@@ -1,6 +1,6 @@
 import type { TStartDirectChatData, TFindDirectChatData } from './types'
-import { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
-import { CreateDirectChatDTO, SearchDirectChatDTO } from './DTO'
+import type { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
+import type { CreateDirectChatDTO, SearchDirectChatDTO } from './DTO'
 
 export interface IDirectChatsController {
    searchDirectChat: (

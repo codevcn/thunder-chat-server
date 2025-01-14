@@ -8,6 +8,7 @@ import { EClientSocketEvents } from '@/gateway/events'
 @Catch(WsException)
 export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
    catch(exception: WsException, host: ArgumentsHost) {
+      console.error('>>> ws exception:', exception)
       const clientSocket = host.switchToWs().getClient<TClientSocket>()
       const formattedException = this.formatException(exception)
       clientSocket.emit(EClientSocketEvents.error, formattedException)
@@ -36,6 +37,7 @@ export function CatchSocketErrors() {
             // call original function
             return await originalMethod.apply(this, args)
          } catch (error) {
+            console.error('>>> catched ws error:', error)
             // return error data to client
             return {
                isError: true,

@@ -7,6 +7,7 @@ import { EValidationMessages } from '../validation/messages'
 @Catch(HttpException)
 export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
    catch(exception: HttpException, host: ArgumentsHost) {
+      console.error('>>> http exception:', exception)
       const ctx = host.switchToHttp()
       const response = ctx.getResponse<Response<THttpErrorResBody>>()
 

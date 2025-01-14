@@ -10,7 +10,3 @@ export type TClientAuth = {
 }
 
 export type TMsgToken = string
-
-export type TQueueIsProcessingTasks = boolean
-
-export type TQueueAsyncTask = () => Promise<void>

@@ -1,7 +1,7 @@
 import { UserService } from '@/user/user.service'
 import type { TFriendRequest } from '@/utils/entities/friend.entity'
 import { EProviderTokens } from '@/utils/enums'
-import { PrismaService } from '@/utils/ORM/prisma.service'
+import { PrismaService } from '@/configs/db/prisma.service'
 import type { TSignatureObject } from '@/utils/types'
 import { Inject, Injectable, BadRequestException } from '@nestjs/common'
 import { countMutualFriends } from '@prisma/client/sql'
@@ -157,13 +157,13 @@ export class FriendService {
    }
 
    async getFriends(getFriendsPayload: GetFriendsDTO): Promise<TGetFriendsData[]> {
-      const { limit, userId, lastFriendRequestId } = getFriendsPayload
+      const { limit, userId, lastFriendId } = getFriendsPayload
       let cursor: TSignatureObject = {}
-      if (lastFriendRequestId) {
+      if (lastFriendId) {
          cursor = {
             skip: 1,
             cursor: {
-               id: lastFriendRequestId,
+               id: lastFriendId,
             },
          }
       }

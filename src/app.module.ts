@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common'
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { DirectChatsModule } from './direct-chat/direct-chat.module'
 import { MessageModule } from './message/message.module'
-import { PrismaModule } from './utils/ORM/prisma.module'
+import { PrismaModule } from './configs/db/prisma.module'
 import { envValidation } from './utils/validation/env.validation'
 import { UserModule } from './user/user.module'
 import ms from 'ms'
@@ -29,6 +29,8 @@ const globalConfigModules = [
 // put gateway here to be able to get env right way
 import { FriendModule } from './friend/friend.module'
 import { GatewayModule } from './gateway/gateway.module'
+import { HealthcheckModule } from './healthcheck/healthcheck.module'
+import { RequestLoggerMiddleware } from './app.middleware'
 
 @Module({
    imports: [
@@ -39,6 +41,11 @@ import { GatewayModule } from './gateway/gateway.module'
       MessageModule,
       UserModule,
       FriendModule,
+      HealthcheckModule,
    ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+   configure(consumer: MiddlewareConsumer) {
+      consumer.apply(RequestLoggerMiddleware).forRoutes('*')
+   }
+}

@@ -5,7 +5,7 @@ import type {
    SendFriendRequestDTO,
 } from './DTO'
 import type { TSuccess } from '@/utils/types'
-import { EFriendRequestStatus } from './enums'
+import type { EFriendRequestStatus } from './enums'
 import type { TGetFriendRequestsData, TGetFriendsData } from './types'
 
 export interface IFriendController {

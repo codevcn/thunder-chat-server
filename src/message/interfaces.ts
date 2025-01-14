@@ -1,5 +1,6 @@
-import { TMessage } from '@/utils/entities/message.entity'
+import type { GetDirectMsgsParamsDTO } from './DTO'
+import type { TGetDirectMessagesData } from './types'
 
 export interface IMessageController {
-   fetchMessages: (directChatId: string) => Promise<TMessage[]>
+   fetchMessages: (directChatId: GetDirectMsgsParamsDTO) => Promise<TGetDirectMessagesData>
 }

@@ -56,5 +56,5 @@ export class GetFriendsDTO {
    @IsOptional()
    @IsNumber()
    @Type(() => Number)
-   lastFriendRequestId?: number
+   lastFriendId?: number
 }
