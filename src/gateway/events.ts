@@ -7,4 +7,5 @@ export enum EClientSocketEvents {
    send_friend_request = 'friend_request:send',
    error = 'error',
    recovered_connection = 'recovered_connection',
+   message_seen_direct = 'message_seen:direct',
 }

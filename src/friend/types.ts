@@ -1,5 +1,5 @@
 import type { TUserWithProfile } from '@/utils/entities/user.entity'
-import { $Enums } from '@prisma/client'
+import type { $Enums } from '@prisma/client'
 
 export type TGetFriendRequestsData = {
    id: number

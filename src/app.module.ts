@@ -29,8 +29,8 @@ const globalConfigModules = [
 // put gateway here to be able to get env right way
 import { FriendModule } from './friend/friend.module'
 import { GatewayModule } from './gateway/gateway.module'
-import { HealthcheckModule } from './healthcheck/healthcheck.module'
 import { RequestLoggerMiddleware } from './app.middleware'
+import { TempModule } from './temp/temp.module'
 
 @Module({
    imports: [
@@ -41,7 +41,7 @@ import { RequestLoggerMiddleware } from './app.middleware'
       MessageModule,
       UserModule,
       FriendModule,
-      HealthcheckModule,
+      TempModule,
    ],
 })
 export class AppModule implements NestModule {

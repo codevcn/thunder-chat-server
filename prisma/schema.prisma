@@ -57,11 +57,12 @@ model DirectChat {
 }
 
 model DirectMessage {
-    id           Int      @id @default(autoincrement())
+    id           Int               @id @default(autoincrement())
     content      String
-    authorId     Int      @map("author_id")
-    directChatId Int      @map("direct_chat_id")
-    createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    authorId     Int               @map("author_id")
+    directChatId Int               @map("direct_chat_id")
+    status       MessageStatusEnum @map("status")
+    createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
     DirectChat DirectChat @relation("MessagesOnDirectChat", fields: [directChatId], references: [id])
     Author     User       @relation("AuthorOnMessages", fields: [authorId], references: [id])
@@ -127,4 +128,9 @@ enum FriendRequestsStatus {
     PENDING
     ACCEPTED
     REJECTED
+}
+
+enum MessageStatusEnum {
+    SENT
+    SEEN
 }

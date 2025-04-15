@@ -21,11 +21,12 @@ import type { TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
-import { ChattingPayloadDTO } from './DTO'
+import { ChattingPayloadDTO, MarkAsSeenDTO } from './DTO'
 import type { TDirectMessage } from '@/message/types'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
 import { MessageTokensManager } from '@/gateway/message-tokens'
+import { EMessageStatus } from '@/message/enums'
 
 @WebSocketGateway({
    cors: {
@@ -145,5 +146,23 @@ export class AppGateway
       }
       client.emit(EClientSocketEvents.send_message_direct, newDirectMsgPayload)
       return { success: true }
+   }
+
+   @SubscribeMessage(EClientSocketEvents.message_seen_direct)
+   @CatchSocketErrors()
+   async handleMarkAsSeenInDirectChat(
+      @MessageBody() data: MarkAsSeenDTO,
+      @ConnectedSocket() client: TClientSocket
+   ) {
+      console.log('>>> run this:', data)
+      const { messageId, receiverId } = data
+      await this.messageService.updateMessageStatus(messageId, EMessageStatus.SEEN)
+      const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
+      if (recipientSocket) {
+         recipientSocket.emit(EClientSocketEvents.message_seen_direct, {
+            messageId: messageId,
+            status: EMessageStatus.SEEN,
+         })
+      }
    }
 }

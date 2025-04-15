@@ -23,3 +23,13 @@ export class ChattingPayloadDTO {
    @Type(() => Date)
    timestamp: Date
 }
+
+export class MarkAsSeenDTO {
+   @IsNumber()
+   @IsNotEmpty()
+   messageId: number
+   
+   @IsNumber()
+   @IsNotEmpty()
+   receiverId: number
+}
