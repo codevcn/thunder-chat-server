@@ -1,5 +1,6 @@
+import { ToBoolean } from '@/utils/validation/transformers'
 import { Type } from 'class-transformer'
-import { IsDate, IsNotEmpty, IsNumber, IsUUID } from 'class-validator'
+import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsUUID } from 'class-validator'
 
 export class ChattingPayloadDTO {
    @IsNumber()
@@ -28,8 +29,19 @@ export class MarkAsSeenDTO {
    @IsNumber()
    @IsNotEmpty()
    messageId: number
-   
+
    @IsNumber()
    @IsNotEmpty()
    receiverId: number
+}
+
+export class TypingDTO {
+   @IsNumber()
+   @IsNotEmpty()
+   receiverId: number
+
+   @IsNotEmpty()
+   @IsBoolean()
+   @ToBoolean()
+   isTyping: boolean
 }

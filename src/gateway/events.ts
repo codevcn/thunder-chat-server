@@ -8,4 +8,5 @@ export enum EClientSocketEvents {
    error = 'error',
    recovered_connection = 'recovered_connection',
    message_seen_direct = 'message_seen:direct',
+   typing_direct = 'typing:direct',
 }

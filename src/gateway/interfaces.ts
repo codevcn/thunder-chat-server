@@ -14,6 +14,7 @@ export interface IEmitSocketEvents {
    [EClientSocketEvents.error]: (error: TWsErrorResponse) => void
    [EClientSocketEvents.recovered_connection]: (messages: TDirectMessage[]) => void
    [EClientSocketEvents.message_seen_direct]: (payload: TMsgStatusPayload) => void
+   [EClientSocketEvents.typing_direct]: (isTyping: boolean) => void
 }
 
 export interface IGateway {

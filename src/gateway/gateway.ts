@@ -21,7 +21,7 @@ import type { TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
-import { ChattingPayloadDTO, MarkAsSeenDTO } from './DTO'
+import { ChattingPayloadDTO, MarkAsSeenDTO, TypingDTO } from './DTO'
 import type { TMessageOffset } from '@/message/types'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
@@ -159,6 +159,17 @@ export class AppGateway
             messageId,
             status: EMessageStatus.SEEN,
          })
+      }
+   }
+
+   @SubscribeMessage(EClientSocketEvents.typing_direct)
+   @CatchSocketErrors()
+   async handleTyping(@MessageBody() data: TypingDTO, @ConnectedSocket() client: TClientSocket) {
+      console.log('>>> run this 168:', data)
+      const { receiverId, isTyping } = data
+      const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
+      if (recipientSocket) {
+         recipientSocket.emit(EClientSocketEvents.typing_direct, isTyping)
       }
    }
 }
