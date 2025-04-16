@@ -22,11 +22,13 @@ import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
 import { ChattingPayloadDTO, MarkAsSeenDTO } from './DTO'
-import type { TDirectMessage } from '@/message/types'
+import type { TMessageOffset } from '@/message/types'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
 import { MessageTokensManager } from '@/gateway/message-tokens'
 import { EMessageStatus } from '@/message/enums'
+import { DirectChatService } from '@/direct-chat/direct-chat.service'
+import { TDirectMessage } from '@/utils/entities/direct-message.entity'
 
 @WebSocketGateway({
    cors: {
@@ -53,7 +55,8 @@ export class AppGateway
       private socketService: SocketService,
       private friendService: FriendService,
       private messageService: MessageService,
-      private authService: AuthService
+      private authService: AuthService,
+      private directChatService: DirectChatService
    ) {}
 
    afterInit(server: Server): void {
@@ -93,12 +96,12 @@ export class AppGateway
 
    async recoverMissingMessages(
       clientSocket: TClientSocket,
-      messageOffset: Date,
+      messageOffset: TMessageOffset,
       directChatId?: number,
       groupId?: number
    ): Promise<void> {
       if (directChatId) {
-         const messages = await this.messageService.findDirectMessagesByOffset(
+         const messages = await this.messageService.getNewerDirectMessages(
             messageOffset,
             directChatId
          )
@@ -133,18 +136,12 @@ export class AppGateway
          timestamp,
          directChatId
       )
-      const newDirectMsgPayload: TDirectMessage = {
-         id: newMessage.id,
-         authorId: clientId,
-         content: message,
-         directChatId,
-         createdAt: timestamp,
-      }
+      await this.directChatService.addLastSentMessage(directChatId, newMessage.id)
       const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
-         recipientSocket.emit(EClientSocketEvents.send_message_direct, newDirectMsgPayload)
+         recipientSocket.emit(EClientSocketEvents.send_message_direct, newMessage)
       }
-      client.emit(EClientSocketEvents.send_message_direct, newDirectMsgPayload)
+      client.emit(EClientSocketEvents.send_message_direct, newMessage)
       return { success: true }
    }
 
@@ -154,13 +151,12 @@ export class AppGateway
       @MessageBody() data: MarkAsSeenDTO,
       @ConnectedSocket() client: TClientSocket
    ) {
-      console.log('>>> run this:', data)
       const { messageId, receiverId } = data
       await this.messageService.updateMessageStatus(messageId, EMessageStatus.SEEN)
       const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.message_seen_direct, {
-            messageId: messageId,
+            messageId,
             status: EMessageStatus.SEEN,
          })
       }

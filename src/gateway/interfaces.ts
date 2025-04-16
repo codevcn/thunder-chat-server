@@ -1,10 +1,11 @@
 import type { TUserWithProfile } from '@/utils/entities/user.entity'
 import type { EClientSocketEvents, EInitEvents } from '../gateway/events'
 import type { TWsErrorResponse } from '@/utils/exceptions/types'
-import type { TDirectMessage, TMsgStatusPayload } from '@/message/types'
+import type { TMsgStatusPayload } from '@/message/types'
 import type { TSuccess } from '@/utils/types'
 import type { ChattingPayloadDTO } from './DTO'
 import type { Socket } from 'socket.io'
+import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
 
 export interface IEmitSocketEvents {
    [EInitEvents.client_connected]: (message: string) => void

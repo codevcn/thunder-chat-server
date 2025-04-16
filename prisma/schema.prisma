@@ -15,15 +15,15 @@ model User {
     username  String?  @unique
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-    Profile                 Profile?
-    SenderDirectChats       DirectChat[]    @relation("CreatorOnDirectChats")
-    RecipientDirectChats    DirectChat[]    @relation("RecipientOnDirectChats")
-    GroupMessages           GroupMessage[]  @relation("AuthorOnMessages")
-    DirectMessages          DirectMessage[] @relation("AuthorOnMessages")
-    FriendRecipients        Friend[]        @relation("RecipientOnFriends")
-    FriendSenders           Friend[]        @relation("SenderOnFriends")
-    SenderFriendRequests    FriendRequest[] @relation("SenderOnFriendRequests")
-    RecipientFriendRequests FriendRequest[] @relation("RecipientOnFriendRequests")
+    Profile                Profile?
+    DirectChatsAsSender    DirectChat[]    @relation("DirectChatsAsSender")
+    DirectChatsAsRecipient DirectChat[]    @relation("DirectChatsAsRecipient")
+    GroupMessages          GroupMessage[]  @relation("GroupMessages")
+    DirectMessages         DirectMessage[] @relation("DirectMessages")
+    FriendsAsRecipient     Friend[]        @relation("FriendsAsRecipient")
+    FriendsAsSender        Friend[]        @relation("FriendsAsSender")
+    FriendRequestsSent     FriendRequest[] @relation("FriendRequestsSent")
+    FriendRequestsReceived FriendRequest[] @relation("FriendRequestsReceived")
 
     @@map("users")
 }
@@ -43,14 +43,16 @@ model Profile {
 }
 
 model DirectChat {
-    id          Int      @id @default(autoincrement())
-    creatorId   Int      @map("creator_id")
-    recipientId Int      @map("recipient_id")
-    createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    id                Int      @id @default(autoincrement())
+    creatorId         Int      @map("creator_id")
+    recipientId       Int      @map("recipient_id")
+    createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    lastSentMessageId Int?     @unique @map("last_sent_message_id")
 
-    Recipient      User            @relation("RecipientOnDirectChats", fields: [recipientId], references: [id])
-    Creator        User            @relation("CreatorOnDirectChats", fields: [creatorId], references: [id])
-    DirectMessages DirectMessage[] @relation("MessagesOnDirectChat")
+    Recipient       User            @relation("DirectChatsAsRecipient", fields: [recipientId], references: [id])
+    Creator         User            @relation("DirectChatsAsSender", fields: [creatorId], references: [id])
+    Messages        DirectMessage[] @relation("MessagesOnDirectChat")
+    LastSentMessage DirectMessage?  @relation("LastSentMessageOnDirectChat", fields: [lastSentMessageId], references: [id])
 
     @@unique([creatorId, recipientId])
     @@map("direct_chats")
@@ -64,8 +66,9 @@ model DirectMessage {
     status       MessageStatusEnum @map("status")
     createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
-    DirectChat DirectChat @relation("MessagesOnDirectChat", fields: [directChatId], references: [id])
-    Author     User       @relation("AuthorOnMessages", fields: [authorId], references: [id])
+    Chat           DirectChat  @relation("MessagesOnDirectChat", fields: [directChatId], references: [id])
+    Author         User        @relation("DirectMessages", fields: [authorId], references: [id])
+    ReferencedChat DirectChat? @relation("LastSentMessageOnDirectChat")
 
     @@unique([directChatId, createdAt])
     @@index(fields: [createdAt(sort: Desc), directChatId], type: BTree)
@@ -80,7 +83,7 @@ model GroupMessage {
     createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
     GroupChat GroupChat @relation("MessagesOnGroupChat", fields: [groupChatId], references: [id])
-    Author    User      @relation("AuthorOnMessages", fields: [authorId], references: [id])
+    Author    User      @relation("GroupMessages", fields: [authorId], references: [id])
 
     @@unique([groupChatId, createdAt])
     @@index(fields: [createdAt(sort: Desc), groupChatId], type: BTree)
@@ -93,8 +96,8 @@ model Friend {
     senderId    Int      @map("sender_id")
     createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-    Recipient User @relation("RecipientOnFriends", fields: [recipientId], references: [id])
-    Sender    User @relation("SenderOnFriends", fields: [senderId], references: [id])
+    Recipient User @relation("FriendsAsRecipient", fields: [recipientId], references: [id])
+    Sender    User @relation("FriendsAsSender", fields: [senderId], references: [id])
 
     @@map("friends")
 }
@@ -107,8 +110,8 @@ model FriendRequest {
     createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
     updatedAt   DateTime             @default(now()) @map("updated_at") @db.Timestamptz(3)
 
-    Sender    User @relation("SenderOnFriendRequests", fields: [senderId], references: [id])
-    Recipient User @relation("RecipientOnFriendRequests", fields: [recipientId], references: [id])
+    Sender    User @relation("FriendRequestsSent", fields: [senderId], references: [id])
+    Recipient User @relation("FriendRequestsReceived", fields: [recipientId], references: [id])
 
     @@unique([senderId, recipientId, status])
     @@map("friend_requests")
@@ -119,7 +122,7 @@ model GroupChat {
     name      String?  @db.VarChar(255)
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-    GroupMessages GroupMessage[] @relation("MessagesOnGroupChat")
+    Messages GroupMessage[] @relation("MessagesOnGroupChat")
 
     @@map("group_chats")
 }

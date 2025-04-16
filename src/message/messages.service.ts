@@ -2,10 +2,9 @@ import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '../configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
-import { getDirectMessages } from '@prisma/client/sql'
 import { EMessageStatus, ESortTypes } from './enums'
 import dayjs from 'dayjs'
-import type { TGetDirectMessagesData } from './types'
+import type { TGetDirectMessagesData, TMessageOffset } from './types'
 
 @Injectable()
 export class MessageService {
@@ -20,7 +19,7 @@ export class MessageService {
    async updateMsg(msgId: number, updates: Partial<TDirectMessage>): Promise<TDirectMessage> {
       const validUpdates = {}
       for (const key of Object.keys(updates)) {
-         const value = validUpdates[key]
+         const value = updates[key]
          if (value) {
             validUpdates[key] = value
          }
@@ -48,19 +47,19 @@ export class MessageService {
       })
    }
 
-   async findDirectMessagesByOffset(
-      messageOffset: Date,
+   async getNewerDirectMessages(
+      messageOffset: TMessageOffset,
       directChatId: number
    ): Promise<TDirectMessage[]> {
       return await this.prismaService.directMessage.findMany({
          where: {
-            createdAt: {
+            directChatId,
+            id: {
                gt: messageOffset,
             },
-            directChatId,
          },
          orderBy: {
-            createdAt: 'asc',
+            id: 'asc',
          },
       })
    }
@@ -77,15 +76,40 @@ export class MessageService {
       return msgs
    }
 
-   async getDirectMessages(
-      msgTime: Date,
+   async getOlderDirectMessages(
+      messageOffset: TMessageOffset,
       directChatId: number,
       limit: number,
-      sortType?: ESortTypes
+      equalOffset: boolean
+   ): Promise<TDirectMessage[]> {
+      return await this.prismaService.directMessage.findMany({
+         where: {
+            id: {
+               [equalOffset ? 'lte' : 'lt']: messageOffset,
+            },
+            directChatId: directChatId,
+         },
+         orderBy: {
+            id: 'desc',
+         },
+         take: limit,
+      })
+   }
+
+   async getOlderDirectMessagesHandler(
+      messageOffset: TMessageOffset,
+      directChatId: number,
+      limit: number,
+      isFirstTime: boolean = false,
+      sortType: ESortTypes = ESortTypes.TIME_ASC
    ): Promise<TGetDirectMessagesData> {
-      const messages = (await this.prismaService.$queryRawTyped(
-         getDirectMessages(msgTime.toISOString(), directChatId, limit + 1)
-      )) as TDirectMessage[]
+      console.log('>>> run this 106')
+      const messages = await this.getOlderDirectMessages(
+         messageOffset,
+         directChatId,
+         limit + 1,
+         isFirstTime
+      )
       let sortedMessages: TDirectMessage[] | null = null
       if (messages && messages.length > 0) {
          sortedMessages = messages.slice(0, -1)

@@ -13,3 +13,7 @@ export type TStartDirectChatData = TDirectChat & {
 }
 
 export type TFindDirectChatData = TStartDirectChatData
+
+export type TUpdateDirectChatData = Partial<{
+   lastSentMessageId: number
+}>

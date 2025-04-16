@@ -1,12 +1,5 @@
+import { TDirectMessage } from '@/utils/entities/direct-message.entity'
 import type { EMessageStatus } from './enums'
-
-export type TDirectMessage = {
-   id: number
-   content: string
-   authorId: number
-   directChatId: number
-   createdAt: Date
-}
 
 export type TNewGroupMessage = {
    id: number
@@ -25,3 +18,5 @@ export type TMsgStatusPayload = {
    messageId: number
    status: EMessageStatus
 }
+
+export type TMessageOffset = number

@@ -1,4 +1,5 @@
 import type { TUserId } from '@/gateway/types'
+import type { TMessageOffset } from '@/message/types'
 import type { TUser } from '@/utils/entities/user.entity'
 import { Exclude, Type } from 'class-transformer'
 import { IsDate, IsNotEmpty, IsNumber, IsOptional } from 'class-validator'
@@ -32,8 +33,8 @@ export class ClientSocketAuthDTO {
 
    @IsOptional()
    @IsDate()
-   @Type(() => Date)
-   messageOffset?: Date
+   @Type(() => Number)
+   messageOffset?: TMessageOffset
 
    @IsOptional()
    @IsNumber()

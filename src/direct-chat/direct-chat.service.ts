@@ -1,4 +1,4 @@
-import type { TFindDirectChatData, TStartDirectChatData } from './types'
+import type { TFindDirectChatData, TStartDirectChatData, TUpdateDirectChatData } from './types'
 import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
@@ -6,6 +6,13 @@ import { EProviderTokens } from '@/utils/enums'
 @Injectable()
 export class DirectChatService {
    constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
+
+   async updateDirectChat(directChatId: number, updates: TUpdateDirectChatData): Promise<void> {
+      await this.prismaService.directChat.update({
+         where: { id: directChatId },
+         data: updates,
+      })
+   }
 
    // async searchDirectChat({
    //    email,
@@ -93,5 +100,9 @@ export class DirectChatService {
             },
          },
       })
+   }
+
+   async addLastSentMessage(directChatId: number, lastSentMessageId: number): Promise<void> {
+      await this.updateDirectChat(directChatId, { lastSentMessageId })
    }
 }
