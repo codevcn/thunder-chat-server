@@ -10,3 +10,7 @@ export type TClientAuth = {
 }
 
 export type TMsgToken = string
+
+export type TConversationTypingFlags = {
+   [key: TUserId]: NodeJS.Timeout
+}

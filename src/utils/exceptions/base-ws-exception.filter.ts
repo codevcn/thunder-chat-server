@@ -29,7 +29,7 @@ export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
 }
 
 // catch socket exceptions at methods level
-export function CatchSocketErrors() {
+export function CatchInternalSocketError() {
    return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
       const originalMethod = descriptor.value
       descriptor.value = async function (...args: any[]): Promise<TWsErrorResponse> {

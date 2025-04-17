@@ -28,6 +28,7 @@ export class CheckAuthDataDTO implements TUser {
 
 export class ClientSocketAuthDTO {
    @IsNumber()
+   @IsNotEmpty()
    @Type(() => Number)
    clientId: TUserId
 

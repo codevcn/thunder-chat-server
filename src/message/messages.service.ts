@@ -103,7 +103,6 @@ export class MessageService {
       isFirstTime: boolean = false,
       sortType: ESortTypes = ESortTypes.TIME_ASC
    ): Promise<TGetDirectMessagesData> {
-      console.log('>>> run this 106')
       const messages = await this.getOlderDirectMessages(
          messageOffset,
          directChatId,

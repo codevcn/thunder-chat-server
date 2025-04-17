@@ -13,7 +13,7 @@ import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
 import { EFriendMessages } from '@/friend/messages'
 import {
-   CatchSocketErrors,
+   CatchInternalSocketError,
    BaseWsExceptionsFilter,
 } from '@/utils/exceptions/base-ws-exception.filter'
 import { MessageService } from '@/message/messages.service'
@@ -25,10 +25,11 @@ import { ChattingPayloadDTO, MarkAsSeenDTO, TypingDTO } from './DTO'
 import type { TMessageOffset } from '@/message/types'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
-import { MessageTokensManager } from '@/gateway/message-tokens'
+import { MessageTokensManager } from '@/gateway/helpers/message-tokens.helper'
 import { EMessageStatus } from '@/message/enums'
 import { DirectChatService } from '@/direct-chat/direct-chat.service'
-import { TDirectMessage } from '@/utils/entities/direct-message.entity'
+import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
+import { ConversationTypingManager } from './helpers/conversation-typing.helper'
 
 @WebSocketGateway({
    cors: {
@@ -50,6 +51,7 @@ export class AppGateway
       IGateway
 {
    private readonly messageTokensManager = new MessageTokensManager()
+   private readonly convTypingManager: ConversationTypingManager = new ConversationTypingManager()
 
    constructor(
       private socketService: SocketService,
@@ -69,15 +71,15 @@ export class AppGateway
          socketId: client.id,
          auth: client.handshake.auth,
       })
-      const { clientId, messageOffset, directChatId, groupId } =
-         await this.authService.validateSocketAuth(client)
-      if (clientId) {
+      try {
+         const { clientId, messageOffset, directChatId, groupId } =
+            await this.authService.validateSocketAuth(client)
          this.socketService.addConnectedClient(clientId, client)
          client.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
          if (messageOffset) {
             await this.recoverMissingMessages(client, messageOffset, directChatId, groupId)
          }
-      } else {
+      } catch (error) {
          client.disconnect(true)
       }
    }
@@ -115,7 +117,7 @@ export class AppGateway
    }
 
    @SubscribeMessage(EClientSocketEvents.send_message_direct)
-   @CatchSocketErrors()
+   @CatchInternalSocketError()
    async handleDirectChatting(
       @MessageBody() payload: ChattingPayloadDTO,
       @ConnectedSocket() client: TClientSocket
@@ -146,7 +148,7 @@ export class AppGateway
    }
 
    @SubscribeMessage(EClientSocketEvents.message_seen_direct)
-   @CatchSocketErrors()
+   @CatchInternalSocketError()
    async handleMarkAsSeenInDirectChat(
       @MessageBody() data: MarkAsSeenDTO,
       @ConnectedSocket() client: TClientSocket
@@ -163,13 +165,18 @@ export class AppGateway
    }
 
    @SubscribeMessage(EClientSocketEvents.typing_direct)
-   @CatchSocketErrors()
+   @CatchInternalSocketError()
    async handleTyping(@MessageBody() data: TypingDTO, @ConnectedSocket() client: TClientSocket) {
-      console.log('>>> run this 168:', data)
+      const { clientId } = await this.authService.validateSocketAuth(client)
       const { receiverId, isTyping } = data
       const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.typing_direct, isTyping)
+         if (isTyping) {
+            this.convTypingManager.initTyping(clientId, recipientSocket)
+         } else {
+            this.convTypingManager.removeTyping(clientId)
+         }
       }
    }
 }

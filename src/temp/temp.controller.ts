@@ -8,7 +8,7 @@ import { EMessageStatus } from '@/message/enums'
 export class TempController {
    constructor(
       @Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService,
-      private messageService: MessageService 
+      private messageService: MessageService
    ) {}
 
    @Get('dl-all-msg')
@@ -19,9 +19,13 @@ export class TempController {
    @Post('all-msg')
    async getAllMessages(@Body() payload: any) {
       const { msgOffset, directChatId, limit, sortType } = payload
-      await this.prismaService.directChat.update({
-         where: { id: 1 },
-         data: { lastSentMessageId: null },
-      })
+      const res = await this.messageService.getOlderDirectMessagesHandler(
+         msgOffset,
+         directChatId,
+         limit,
+         false,
+         sortType
+      )
+      console.log('>>> res:', res)
    }
 }

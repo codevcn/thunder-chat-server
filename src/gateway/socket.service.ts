@@ -37,8 +37,8 @@ export class SocketService {
       }
    }
 
-   async sendFriendRequest(sender: TUserWithProfile, recipientSocketId: TUserId): Promise<void> {
-      const recipientSocket = this.getConnectedClient<IEmitSocketEvents>(recipientSocketId)
+   async sendFriendRequest(sender: TUserWithProfile, recipientId: TUserId): Promise<void> {
+      const recipientSocket = this.getConnectedClient<IEmitSocketEvents>(recipientId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.send_friend_request, sender)
       }
