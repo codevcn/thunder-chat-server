@@ -5,6 +5,7 @@ export enum ERoutes {
    MESSAGE = 'message',
    FRIEND = 'friend',
    HEALTHCHECK = 'healthcheck',
+   STICKER = 'sticker',
 }
 
 export enum EClientCookieNames {

@@ -19,4 +19,4 @@ export type TMsgStatusPayload = {
    status: EMessageStatus
 }
 
-export type TMessageOffset = number
+export type TMessageOffset = TDirectMessage['id']

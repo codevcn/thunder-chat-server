@@ -1,7 +1,8 @@
 import { Socket } from 'socket.io'
 import type { IEmitSocketEvents } from './interfaces'
+import type { TUser } from '@/utils/entities/user.entity'
 
-export type TUserId = number
+export type TUserId = TUser['id']
 
 export type TClientSocket = Socket<{}, IEmitSocketEvents>
 

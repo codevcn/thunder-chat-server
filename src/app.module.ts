@@ -31,6 +31,7 @@ import { FriendModule } from './friend/friend.module'
 import { GatewayModule } from './gateway/gateway.module'
 import { RequestLoggerMiddleware } from './app.middleware'
 import { TempModule } from './temp/temp.module'
+import { StickersModule } from './message/stickers/stickers.module'
 
 @Module({
    imports: [
@@ -41,6 +42,7 @@ import { TempModule } from './temp/temp.module'
       MessageModule,
       UserModule,
       FriendModule,
+      StickersModule,
       TempModule,
    ],
 })

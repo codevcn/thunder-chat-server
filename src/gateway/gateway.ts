@@ -21,12 +21,12 @@ import type { TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
 import { wsValidationPipe } from './validation'
 import { SocketService } from './socket.service'
-import { ChattingPayloadDTO, MarkAsSeenDTO, TypingDTO } from './DTO'
+import { MarkAsSeenDTO, TypingDTO, SendDirectMessageDTO } from './DTO'
 import type { TMessageOffset } from '@/message/types'
 import { EMsgMessages } from '@/message/messages'
 import { AuthService } from '@/auth/auth.service'
 import { MessageTokensManager } from '@/gateway/helpers/message-tokens.helper'
-import { EMessageStatus } from '@/message/enums'
+import { EMessageStatus, EMessageTypes } from '@/message/enums'
 import { DirectChatService } from '@/direct-chat/direct-chat.service'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
 import { ConversationTypingManager } from './helpers/conversation-typing.helper'
@@ -116,34 +116,87 @@ export class AppGateway
       }
    }
 
-   @SubscribeMessage(EClientSocketEvents.send_message_direct)
-   @CatchInternalSocketError()
-   async handleDirectChatting(
-      @MessageBody() payload: ChattingPayloadDTO,
-      @ConnectedSocket() client: TClientSocket
-   ) {
-      const { clientId } = await this.authService.validateSocketAuth(client)
-      const { message, receiverId, token } = payload
+   async checkUniqueMessage(token: string, clientId: number): Promise<void> {
       if (!this.messageTokensManager.isUniqueToken(clientId, token)) {
          throw new BaseWsException(EMsgMessages.MESSAGE_OVERLAPS)
       }
+   }
+
+   async checkFriendship(clientId: number, receiverId: number): Promise<void> {
       const isFriend = await this.friendService.isFriend(clientId, receiverId)
       if (!isFriend) {
          throw new BaseWsException(EFriendMessages.IS_NOT_FRIEND, HttpStatus.BAD_REQUEST)
       }
-      const { directChatId, timestamp } = payload
+   }
+
+   async handleMessage(
+      client: { socket: TClientSocket; id: number },
+      message: {
+         content: string
+         timestamp: Date
+         directChatId: number
+         receiverId: number
+         type: EMessageTypes
+         stickerUrl?: string
+      }
+   ): Promise<void> {
+      const { id, socket } = client
+      const { content, timestamp, directChatId, receiverId, stickerUrl, type } = message
       const newMessage = await this.messageService.createNewDirectMessage(
-         message,
-         clientId,
+         content,
+         id,
          timestamp,
-         directChatId
+         directChatId,
+         type,
+         stickerUrl
       )
       await this.directChatService.addLastSentMessage(directChatId, newMessage.id)
       const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.send_message_direct, newMessage)
       }
-      client.emit(EClientSocketEvents.send_message_direct, newMessage)
+      socket.emit(EClientSocketEvents.send_message_direct, newMessage)
+   }
+
+   @SubscribeMessage(EClientSocketEvents.send_message_direct)
+   @CatchInternalSocketError()
+   async handleSendDirectMessage(
+      @MessageBody() payload: SendDirectMessageDTO,
+      @ConnectedSocket() client: TClientSocket
+   ) {
+      const { type, msgPayload } = payload
+      const { clientId } = await this.authService.validateSocketAuth(client)
+      const { receiverId, token } = msgPayload
+      await this.checkUniqueMessage(token, clientId)
+      await this.checkFriendship(clientId, receiverId)
+      const { directChatId, timestamp, content } = msgPayload
+      switch (type) {
+         case EMessageTypes.TEXT:
+            await this.handleMessage(
+               { id: clientId, socket: client },
+               {
+                  content,
+                  timestamp,
+                  directChatId,
+                  receiverId,
+                  type: EMessageTypes.TEXT,
+               }
+            )
+            break
+         case EMessageTypes.STICKER:
+            await this.handleMessage(
+               { id: clientId, socket: client },
+               {
+                  content: '',
+                  timestamp,
+                  directChatId,
+                  receiverId,
+                  type: EMessageTypes.STICKER,
+                  stickerUrl: content,
+               }
+            )
+            break
+      }
       return { success: true }
    }
 

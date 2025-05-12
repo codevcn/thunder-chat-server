@@ -3,9 +3,10 @@ import type { EClientSocketEvents, EInitEvents } from '../gateway/events'
 import type { TWsErrorResponse } from '@/utils/exceptions/types'
 import type { TMsgStatusPayload } from '@/message/types'
 import type { TSuccess } from '@/utils/types'
-import type { ChattingPayloadDTO } from './DTO'
+import type { MarkAsSeenDTO, SendDirectMessageDTO, TypingDTO } from './DTO'
 import type { Socket } from 'socket.io'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
+import type { TClientSocket } from './types'
 
 export interface IEmitSocketEvents {
    [EInitEvents.client_connected]: (message: string) => void
@@ -18,8 +19,10 @@ export interface IEmitSocketEvents {
 }
 
 export interface IGateway {
-   handleDirectChatting: (
-      payload: ChattingPayloadDTO,
+   handleSendDirectMessage: (
+      payload: SendDirectMessageDTO,
       client: Socket<IEmitSocketEvents>
    ) => Promise<TSuccess>
+   handleMarkAsSeenInDirectChat: (data: MarkAsSeenDTO, client: TClientSocket) => Promise<void>
+   handleTyping: (data: TypingDTO, client: TClientSocket) => Promise<void>
 }

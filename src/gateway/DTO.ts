@@ -1,14 +1,23 @@
+import { EMessageTypes } from '@/message/enums'
 import { ToBoolean } from '@/utils/validation/transformers'
 import { Type } from 'class-transformer'
-import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsUUID } from 'class-validator'
+import {
+   IsBoolean,
+   IsDate,
+   IsEnum,
+   IsNotEmpty,
+   IsNumber,
+   IsUUID,
+   ValidateNested,
+} from 'class-validator'
 
-export class ChattingPayloadDTO {
+export class SendDirectMessagePayloadDTO {
    @IsNumber()
    @IsNotEmpty()
    receiverId: number
 
    @IsNotEmpty()
-   message: string
+   content: string
 
    @IsNumber()
    @IsNotEmpty()
@@ -23,6 +32,16 @@ export class ChattingPayloadDTO {
    @IsDate()
    @Type(() => Date)
    timestamp: Date
+}
+
+export class SendDirectMessageDTO {
+   @IsEnum(EMessageTypes)
+   @IsNotEmpty()
+   type: EMessageTypes
+
+   @IsNotEmpty()
+   @ValidateNested()
+   msgPayload: SendDirectMessagePayloadDTO
 }
 
 export class MarkAsSeenDTO {

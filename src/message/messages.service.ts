@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '../configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
-import { EMessageStatus, ESortTypes } from './enums'
+import { EMessageStatus, EMessageTypes, ESortTypes } from './enums'
 import dayjs from 'dayjs'
 import type { TGetDirectMessagesData, TMessageOffset } from './types'
 
@@ -34,7 +34,9 @@ export class MessageService {
       content: string,
       authorId: number,
       timestamp: Date,
-      directChatId: number
+      directChatId: number,
+      type: EMessageTypes = EMessageTypes.TEXT,
+      stickerUrl?: string
    ): Promise<TDirectMessage> {
       return await this.prismaService.directMessage.create({
          data: {
@@ -43,6 +45,8 @@ export class MessageService {
             createdAt: timestamp,
             directChatId,
             status: EMessageStatus.SENT,
+            type,
+            stickerUrl,
          },
       })
    }
