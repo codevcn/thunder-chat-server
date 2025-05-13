@@ -44,6 +44,25 @@ export class FriendService {
       })
    }
 
+   async update(
+      requestId: number,
+      senderId: number,
+      recipientId: number,
+      status: EFriendRequestStatus
+   ): Promise<TFriendRequest> {
+      return await this.prismaService.friendRequest.update({
+         where: {
+            id: requestId,
+         },
+         data: {
+            status,
+            senderId,
+            recipientId,
+            updatedAt: new Date(),
+         },
+      })
+   }
+
    async findFriendRequest(senderId: number, recipientId: number): Promise<TFriendRequest | null> {
       return await this.prismaService.friendRequest.findFirst({ where: { senderId, recipientId } })
    }
@@ -52,10 +71,11 @@ export class FriendService {
       senderId: number,
       recipientId: number
    ): Promise<TFriendRequest | null> {
+      const relatedUsers = [senderId, recipientId]
       return await this.prismaService.friendRequest.findFirst({
          where: {
-            senderId: { in: [senderId, recipientId] },
-            status: { in: [EFriendRequestStatus.PENDING, EFriendRequestStatus.ACCEPTED] },
+            senderId: { in: relatedUsers },
+            recipientId: { in: relatedUsers },
          },
       })
    }
@@ -66,7 +86,13 @@ export class FriendService {
       }
       const existing = await this.findSentFriendRequest(senderId, recipientId)
       if (existing) {
-         throw new BadRequestException(EFriendMessages.INVITATION_SENT_BEFORE)
+         if (
+            existing.status === EFriendRequestStatus.PENDING ||
+            existing.status === EFriendRequestStatus.ACCEPTED
+         ) {
+            throw new BadRequestException(EFriendMessages.INVITATION_SENT_BEFORE)
+         }
+         await this.update(existing.id, senderId, recipientId, EFriendRequestStatus.PENDING)
       }
       await this.create(senderId, recipientId)
       const sender = await this.userService.findUserWithProfileById(senderId)
@@ -140,7 +166,7 @@ export class FriendService {
          where: {
             OR: [{ recipientId: userId }, { senderId: userId }],
          },
-         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+         orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
          select: {
             id: true,
             Sender: {

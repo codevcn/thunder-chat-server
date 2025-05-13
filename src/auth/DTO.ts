@@ -16,7 +16,6 @@ export class CheckAuthDataDTO implements TUser {
    id: number
    createdAt: Date
    email: string
-   username: string | null
 
    @Exclude()
    password: string

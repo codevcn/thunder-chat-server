@@ -3,7 +3,6 @@ import type { TUserWithProfile } from '@/utils/entities/user.entity'
 
 export type TSearchDirectChatParams = {
    email?: string
-   username?: string
    creatorId: number
    nameOfUser?: string
 }

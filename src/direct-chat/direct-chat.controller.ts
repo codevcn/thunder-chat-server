@@ -17,16 +17,15 @@ export class DirectChatController implements IDirectChatsController {
       @User() user: TUser,
       @Body() searchDirectChatPayload: SearchDirectChatDTO
    ) {
-      const { email, username, nameOfUser } = searchDirectChatPayload
-      if (!email && !username && !nameOfUser) {
-         throw new BadRequestException('Query is missing email and username and name')
+      const { email, nameOfUser } = searchDirectChatPayload
+      if (!email && !nameOfUser) {
+         throw new BadRequestException('Query is missing email and nameOfUser')
       }
       // >>> fix this
       // return await this.conversationService.searchDirectChat({
       //    email: email,
-      //    username: username,
-      //    creatorId: user.id,
       //    nameOfUser: nameOfUser,
+      //    creatorId: user.id,
       // })
       return []
    }

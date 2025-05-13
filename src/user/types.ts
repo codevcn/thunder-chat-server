@@ -11,7 +11,6 @@ export type TSearchProfilesData = {
    User: {
       id: number
       email: string
-      username: string | null
    }
    fullName: string
    avatar: string | null
@@ -20,7 +19,6 @@ export type TSearchProfilesData = {
 export type TSearchUsersData = {
    id: number
    email: string
-   username: string | null
    Profile: {
       id: number
       fullName: string

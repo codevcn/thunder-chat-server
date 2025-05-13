@@ -106,7 +106,6 @@ export class UserService {
                select: {
                   id: true,
                   email: true,
-                  username: true,
                },
             },
          },
@@ -118,15 +117,11 @@ export class UserService {
          ...cursor,
          where: {
             id: { notIn: userFilter },
-            OR: [
-               { username: { contains: keyword, mode: 'insensitive' } },
-               { email: { contains: keyword, mode: 'insensitive' } },
-            ],
+            email: { contains: keyword, mode: 'insensitive' },
          },
          select: {
             id: true,
             email: true,
-            username: true,
             Profile: {
                select: {
                   id: true,

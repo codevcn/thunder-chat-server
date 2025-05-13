@@ -16,13 +16,12 @@ export class DirectChatService {
 
    // async searchDirectChat({
    //    email,
-   //    username,
    //    nameOfUser,
    //    creatorId,
    // }: TSearchDirectChatParams): Promise<TUserWithProfile[]> {
    //    const user = await this.prismaService.user.findMany({
    //       where: {
-   //          OR: [{ email }, { username }],
+   //          OR: [{ email }, { nameOfUser }],
    //          NOT: {
    //             id: creatorId,
    //          },

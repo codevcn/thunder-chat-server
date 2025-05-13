@@ -7,9 +7,6 @@ export class SearchDirectChatDTO {
    email: string
 
    @IsOptional()
-   username: string
-
-   @IsOptional()
    nameOfUser: string
 }
 
