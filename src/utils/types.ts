@@ -24,3 +24,5 @@ export type TSuccess = {
 export type TSignatureObject = {
    [key: string | number]: any
 }
+
+export type TDiscriminatedQueryReturn<S, I, O> = { select?: S } | { include?: I } | { omit?: O }

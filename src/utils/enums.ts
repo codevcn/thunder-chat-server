@@ -4,6 +4,7 @@ export enum ERoutes {
    DIRECT_CHAT = 'direct-chat',
    MESSAGE = 'message',
    FRIEND = 'friend',
+   FRIEND_REQUEST = 'friend-request',
    HEALTHCHECK = 'healthcheck',
    STICKER = 'sticker',
 }

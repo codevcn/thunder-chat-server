@@ -21,4 +21,15 @@ export class StickersService {
    async getAllStickerCategories(): Promise<TStickerCategory[]> {
       return await this.prismaService.stickerCategory.findMany()
    }
+
+   async getGreetingSticker(): Promise<TSticker | null> {
+      const stickerIds = await this.prismaService.sticker.findMany({
+         distinct: ['id'],
+      })
+      if (stickerIds.length === 0) return null
+      const randomIndex = Math.floor(Math.random() * stickerIds.length)
+      return await this.prismaService.sticker.findFirst({
+         where: { id: stickerIds[randomIndex].id },
+      })
+   }
 }

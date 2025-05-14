@@ -32,6 +32,7 @@ import { GatewayModule } from './gateway/gateway.module'
 import { RequestLoggerMiddleware } from './app.middleware'
 import { TempModule } from './temp/temp.module'
 import { StickersModule } from './message/stickers/stickers.module'
+import { FriendRequestModule } from './friend-request/friend-request.module'
 
 @Module({
    imports: [
@@ -41,6 +42,7 @@ import { StickersModule } from './message/stickers/stickers.module'
       DirectChatsModule,
       MessageModule,
       UserModule,
+      FriendRequestModule,
       FriendModule,
       StickersModule,
       TempModule,

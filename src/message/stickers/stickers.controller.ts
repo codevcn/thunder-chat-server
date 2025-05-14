@@ -18,4 +18,9 @@ export class StickerController implements IStickerController {
    async getAllStickerCategories() {
       return await this.stickersService.getAllStickerCategories()
    }
+
+   @Get('get-greeting-sticker')
+   async getGreetingSticker() {
+      return await this.stickersService.getGreetingSticker()
+   }
 }

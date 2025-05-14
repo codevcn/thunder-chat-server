@@ -7,15 +7,20 @@ import type { MarkAsSeenDTO, SendDirectMessageDTO, TypingDTO } from './DTO'
 import type { Socket } from 'socket.io'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
 import type { TClientSocket } from './types'
+import type { TFriendRequestPayload, TGetFriendRequestsData } from '@/friend-request/types'
 
 export interface IEmitSocketEvents {
    [EInitEvents.client_connected]: (message: string) => void
    [EClientSocketEvents.send_message_direct]: (payload: TDirectMessage) => void
-   [EClientSocketEvents.send_friend_request]: (payload: TUserWithProfile) => void
+   [EClientSocketEvents.send_friend_request]: (
+      payload: TUserWithProfile,
+      requestData: TGetFriendRequestsData
+   ) => void
    [EClientSocketEvents.error]: (error: TWsErrorResponse) => void
    [EClientSocketEvents.recovered_connection]: (messages: TDirectMessage[]) => void
    [EClientSocketEvents.message_seen_direct]: (payload: TMsgStatusPayload) => void
    [EClientSocketEvents.typing_direct]: (isTyping: boolean) => void
+   [EClientSocketEvents.friend_request_action]: (payload: TFriendRequestPayload) => void
 }
 
 export interface IGateway {

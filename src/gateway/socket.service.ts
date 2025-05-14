@@ -5,6 +5,8 @@ import { EventsMap } from 'socket.io/dist/typed-events'
 import type { TUserWithProfile } from '@/utils/entities/user.entity'
 import type { IEmitSocketEvents } from './interfaces'
 import { EClientSocketEvents } from './events'
+import { EFriendRequestStatus } from '@/friend-request/enums'
+import type { TGetFriendRequestsData } from '@/friend-request/types'
 
 @Injectable()
 export class SocketService {
@@ -37,10 +39,24 @@ export class SocketService {
       }
    }
 
-   async sendFriendRequest(sender: TUserWithProfile, recipientId: TUserId): Promise<void> {
+   sendFriendRequest(
+      sender: TUserWithProfile,
+      recipientId: TUserId,
+      requestData: TGetFriendRequestsData
+   ): void {
       const recipientSocket = this.getConnectedClient<IEmitSocketEvents>(recipientId)
       if (recipientSocket) {
-         recipientSocket.emit(EClientSocketEvents.send_friend_request, sender)
+         recipientSocket.emit(EClientSocketEvents.send_friend_request, sender, requestData)
+      }
+   }
+
+   friendRequestAction(senderId: number, requestId: number, action: EFriendRequestStatus): void {
+      const senderSocket = this.getConnectedClient<IEmitSocketEvents>(senderId)
+      if (senderSocket) {
+         senderSocket.emit(EClientSocketEvents.friend_request_action, {
+            requestId,
+            action,
+         })
       }
    }
 }
