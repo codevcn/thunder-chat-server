@@ -38,6 +38,12 @@ class EnvironmentVariables {
 
    @IsString()
    CLIENT_DOMAIN_DEV: string
+
+   @IsString()
+   ELASTIC_CLOUD_ID: string
+
+   @IsString()
+   ELASTIC_API_KEY: string
 }
 
 export function envValidation(config: Record<string, unknown>) {

@@ -14,7 +14,7 @@ import { Prisma } from '@prisma/client'
 @Injectable()
 export class FriendRequestService {
    constructor(
-      @Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService,
+      @Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService,
       private userService: UserService,
       private socketService: SocketService
    ) {}
@@ -28,7 +28,7 @@ export class FriendRequestService {
          Prisma.FriendRequestOmit
       >
    ): Promise<R> {
-      return (await this.prismaService.friendRequest.create({
+      return (await this.PrismaService.friendRequest.create({
          data: {
             status: 'PENDING',
             recipientId,
@@ -49,7 +49,7 @@ export class FriendRequestService {
          Prisma.FriendRequestOmit
       >
    ): Promise<R> {
-      return (await this.prismaService.friendRequest.update({
+      return (await this.PrismaService.friendRequest.update({
          where: {
             id: requestId,
          },
@@ -64,7 +64,7 @@ export class FriendRequestService {
    }
 
    async findFriendRequest(senderId: number, recipientId: number): Promise<TFriendRequest | null> {
-      return await this.prismaService.friendRequest.findFirst({ where: { senderId, recipientId } })
+      return await this.PrismaService.friendRequest.findFirst({ where: { senderId, recipientId } })
    }
 
    async findSentFriendRequest(
@@ -72,7 +72,7 @@ export class FriendRequestService {
       recipientId: number
    ): Promise<TFriendRequest | null> {
       const relatedUsers = [senderId, recipientId]
-      return await this.prismaService.friendRequest.findFirst({
+      return await this.PrismaService.friendRequest.findFirst({
          where: {
             senderId: { in: relatedUsers },
             recipientId: { in: relatedUsers },
@@ -144,8 +144,8 @@ export class FriendRequestService {
       const { requestId, action, senderId } = friendRequestPayload
       switch (action) {
          case EFriendRequestStatus.ACCEPTED:
-            await this.prismaService.$transaction(async (tx) => {
-               const friendRequest = await this.prismaService.friendRequest.update({
+            await this.PrismaService.$transaction(async (tx) => {
+               const friendRequest = await this.PrismaService.friendRequest.update({
                   where: {
                      id: requestId,
                   },
@@ -153,7 +153,7 @@ export class FriendRequestService {
                      status: EFriendRequestStatus.ACCEPTED,
                   },
                })
-               await this.prismaService.friend.create({
+               await this.PrismaService.friend.create({
                   data: {
                      recipientId: friendRequest.recipientId,
                      senderId: friendRequest.senderId,
@@ -162,7 +162,7 @@ export class FriendRequestService {
             })
             break
          case EFriendRequestStatus.REJECTED:
-            await this.prismaService.friendRequest.update({
+            await this.PrismaService.friendRequest.update({
                where: {
                   id: requestId,
                },
@@ -188,7 +188,7 @@ export class FriendRequestService {
             },
          }
       }
-      return await this.prismaService.friendRequest.findMany({
+      return await this.PrismaService.friendRequest.findMany({
          take: limit,
          ...cursor,
          where: {

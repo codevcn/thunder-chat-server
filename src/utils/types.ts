@@ -1,6 +1,7 @@
 import type { Request } from 'express'
 import { EClientCookieNames } from './enums'
 import type { TUser } from './entities/user.entity'
+import { HttpStatus } from '@nestjs/common'
 
 export type TRequestWithUser = Request & { user: TUser }
 
@@ -26,3 +27,9 @@ export type TSignatureObject = {
 }
 
 export type TDiscriminatedQueryReturn<S, I, O> = { select?: S } | { include?: I } | { omit?: O }
+
+export type TWsErrorResponse = {
+   isError: boolean
+   message: string
+   httpStatus: HttpStatus
+}

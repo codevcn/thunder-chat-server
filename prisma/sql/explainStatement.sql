@@ -11,4 +11,4 @@ FROM direct_messages
 WHERE
     created_at < $1
 ORDER BY created_at DESC
-LIMIT $2
+LIMIT $2;

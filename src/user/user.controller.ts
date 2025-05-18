@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common'
 import { CreateUserDTO, GetUserByEmailDTO, SearchUsersDTO } from '@/user/DTO'
 import { UserService } from '@/user/user.service'
 import { ERoutes } from '@/utils/enums'
 import { JWTService } from '@/auth/jwt.service'
 import type { Response } from 'express'
 import type { IUserController } from './interfaces'
+import { AuthGuard } from '@/auth/auth.guard'
 
 @Controller(ERoutes.USER)
 export class UserController implements IUserController {
@@ -34,6 +35,7 @@ export class UserController implements IUserController {
    }
 
    @Get('search-users')
+   @UseGuards(AuthGuard)
    async searchUsers(@Query() searchUsersPayload: SearchUsersDTO) {
       return await this.userService.searchUsers(searchUsersPayload)
    }

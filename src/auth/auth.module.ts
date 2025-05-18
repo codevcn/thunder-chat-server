@@ -6,7 +6,6 @@ import { UserService } from '@/user/user.service'
 import { CredentialService } from './credential.service'
 
 @Module({
-   imports: [],
    controllers: [AuthController],
    providers: [AuthService, JWTService, UserService, CredentialService],
 })

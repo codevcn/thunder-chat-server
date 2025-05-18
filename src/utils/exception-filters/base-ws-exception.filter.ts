@@ -1,9 +1,9 @@
 import { BaseWsException } from '@/utils/exceptions/base-ws.exception'
 import { Catch, ArgumentsHost, HttpStatus } from '@nestjs/common'
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets'
-import type { TWsErrorResponse } from './types'
 import type { TClientSocket } from '@/gateway/types'
 import { EClientSocketEvents } from '@/gateway/events'
+import type { TWsErrorResponse } from '../types'
 
 @Catch(WsException)
 export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
@@ -16,7 +16,7 @@ export class BaseWsExceptionsFilter extends BaseWsExceptionFilter {
    }
 
    private formatException(exception: WsException): TWsErrorResponse {
-      const toReturn = {
+      const toReturn: TWsErrorResponse = {
          message: exception.message,
          httpStatus: HttpStatus.INTERNAL_SERVER_ERROR,
          isError: true,

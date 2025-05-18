@@ -59,4 +59,8 @@ export class SocketService {
          })
       }
    }
+
+   checkUserOnlineStatus(userId: TUserId): boolean {
+      return this.connectedClients.has(userId)
+   }
 }

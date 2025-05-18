@@ -15,7 +15,7 @@ import { EFriendMessages } from '@/friend/messages'
 import {
    CatchInternalSocketError,
    BaseWsExceptionsFilter,
-} from '@/utils/exceptions/base-ws-exception.filter'
+} from '@/utils/exception-filters/base-ws-exception.filter'
 import { MessageService } from '@/message/messages.service'
 import type { TClientSocket } from './types'
 import type { IEmitSocketEvents, IGateway } from './interfaces'
@@ -147,6 +147,7 @@ export class AppGateway
          id,
          timestamp,
          directChatId,
+         receiverId,
          type,
          stickerUrl
       )

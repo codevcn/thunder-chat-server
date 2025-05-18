@@ -7,11 +7,10 @@ export type TSearchDirectChatParams = {
    nameOfUser?: string
 }
 
-export type TStartDirectChatData = TDirectChat & {
+export type TFindDirectChatData = TDirectChat & {
    Recipient: TUserWithProfile
+   Creator: TUserWithProfile
 }
-
-export type TFindDirectChatData = TStartDirectChatData
 
 export type TUpdateDirectChatData = Partial<{
    lastSentMessageId: number

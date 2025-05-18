@@ -4,9 +4,10 @@ import { Module } from '@nestjs/common'
 import { JWTService } from '@/auth/jwt.service'
 import { UserService } from '@/user/user.service'
 import { CredentialService } from '@/auth/credential.service'
+import { UserModule } from '@/user/user.module'
 
 @Module({
-   imports: [],
+   imports: [UserModule],
    controllers: [DirectChatController],
    providers: [DirectChatService, JWTService, UserService, CredentialService],
 })

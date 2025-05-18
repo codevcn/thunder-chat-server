@@ -1,4 +1,4 @@
-import { TUser } from '@/utils/entities/user.entity'
+import type { TUser } from '@/utils/entities/user.entity'
 import type { TRequestWithUser } from '@/utils/types'
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 

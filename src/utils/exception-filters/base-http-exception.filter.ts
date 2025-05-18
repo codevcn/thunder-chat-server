@@ -1,13 +1,15 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common'
 import type { Response } from 'express'
 import type { THttpErrorResBody } from '@/utils/types'
-import { BaseHttpException } from './base-http.exception'
+import { BaseHttpException } from '../exceptions/base-http.exception'
 import { EValidationMessages } from '../validation/messages'
 
 @Catch(HttpException)
 export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {
    catch(exception: HttpException, host: ArgumentsHost) {
-      console.error('>>> http exception:', exception)
+      queueMicrotask(() => {
+         console.error('>>> http exception:', exception)
+      })
       const ctx = host.switchToHttp()
       const response = ctx.getResponse<Response<THttpErrorResBody>>()
 

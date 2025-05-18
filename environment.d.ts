@@ -15,6 +15,8 @@ declare global {
          CLIENT_HOST_DEV: string
          CLIENT_DOMAIN: string
          CLIENT_HOST: string
+         ELASTIC_CLOUD_ID: string
+         ELASTIC_API_KEY: string
       }
    }
 }

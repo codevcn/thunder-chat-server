@@ -1,5 +1,5 @@
--- @param {Int} $1:myselfId
--- @param {Int} $2:friendId
+-- @param {Int} $1:myselfId who is the user want to check number of mutual friends
+-- @param {Int} $2:friendId who is the user want to check mutual friends with
 
 SELECT COUNT(f.id) as "mutualFriends"
 FROM friends f

@@ -12,19 +12,19 @@ import { SearchUsersDTO } from './DTO'
 @Injectable()
 export class UserService {
    constructor(
-      @Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService,
+      @Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService,
       private jwtService: JWTService,
       private credentialService: CredentialService
    ) {}
 
    async findById(id: number): Promise<TUser | null> {
-      return await this.prismaService.user.findUnique({
+      return await this.PrismaService.user.findUnique({
          where: { id },
       })
    }
 
    async findUserWithProfileById(userId: number): Promise<TUserWithProfile | null> {
-      return await this.prismaService.user.findUnique({
+      return await this.PrismaService.user.findUnique({
          where: { id: userId },
          include: {
             Profile: true,
@@ -39,14 +39,14 @@ export class UserService {
 
    async createUser({ email, password }: TCreateUserParams): Promise<TUser> {
       const hashedPassword = await this.credentialService.getHashedPassword(password)
-      const exist_user = await this.prismaService.user.findUnique({
+      const exist_user = await this.PrismaService.user.findUnique({
          where: { email },
       })
       if (exist_user) {
          throw new ConflictException(EAuthMessages.USER_EXISTED)
       }
 
-      return await this.prismaService.user.create({
+      return await this.PrismaService.user.create({
          data: {
             email: email,
             password: hashedPassword,
@@ -55,7 +55,7 @@ export class UserService {
    }
 
    async getUserByEmail(email: string): Promise<TUserWithProfile> {
-      const user = await this.prismaService.user.findUnique({
+      const user = await this.PrismaService.user.findUnique({
          where: {
             email: email,
          },
@@ -92,7 +92,7 @@ export class UserService {
             },
          }
       }
-      const profiles = await this.prismaService.profile.findMany({
+      const profiles = await this.PrismaService.profile.findMany({
          take: limit,
          ...cursor,
          where: {
@@ -112,7 +112,7 @@ export class UserService {
       })
       const userFilter: number[] =
          profiles && profiles.length > 0 ? profiles.map((profile) => profile.User.id) : []
-      const users = await this.prismaService.user.findMany({
+      const users = await this.PrismaService.user.findMany({
          take: limit,
          ...cursor,
          where: {

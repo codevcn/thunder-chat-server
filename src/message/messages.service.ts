@@ -8,10 +8,10 @@ import type { TGetDirectMessagesData, TMessageOffset } from './types'
 
 @Injectable()
 export class MessageService {
-   constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
+   constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService) {}
 
    async findMsgById(msgId: number): Promise<TDirectMessage | null> {
-      return await this.prismaService.directMessage.findUnique({
+      return await this.PrismaService.directMessage.findUnique({
          where: { id: msgId },
       })
    }
@@ -24,7 +24,7 @@ export class MessageService {
             validUpdates[key] = value
          }
       }
-      return await this.prismaService.directMessage.update({
+      return await this.PrismaService.directMessage.update({
          where: { id: msgId },
          data: validUpdates,
       })
@@ -35,10 +35,11 @@ export class MessageService {
       authorId: number,
       timestamp: Date,
       directChatId: number,
+      recipientId: number,
       type: EMessageTypes = EMessageTypes.TEXT,
       stickerUrl?: string
    ): Promise<TDirectMessage> {
-      return await this.prismaService.directMessage.create({
+      return await this.PrismaService.directMessage.create({
          data: {
             content,
             authorId,
@@ -47,6 +48,7 @@ export class MessageService {
             status: EMessageStatus.SENT,
             type,
             stickerUrl,
+            recipientId,
          },
       })
    }
@@ -55,7 +57,7 @@ export class MessageService {
       messageOffset: TMessageOffset,
       directChatId: number
    ): Promise<TDirectMessage[]> {
-      return await this.prismaService.directMessage.findMany({
+      return await this.PrismaService.directMessage.findMany({
          where: {
             directChatId,
             id: {
@@ -86,7 +88,7 @@ export class MessageService {
       limit: number,
       equalOffset: boolean
    ): Promise<TDirectMessage[]> {
-      return await this.prismaService.directMessage.findMany({
+      return await this.PrismaService.directMessage.findMany({
          where: {
             id: {
                [equalOffset ? 'lte' : 'lt']: messageOffset,

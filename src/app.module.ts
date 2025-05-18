@@ -9,12 +9,14 @@ import { envValidation } from './utils/validation/env.validation'
 import { UserModule } from './user/user.module'
 import ms from 'ms'
 import { EventEmitterModule } from '@nestjs/event-emitter'
+import { LoggerModule } from './configs/logger/logger.module'
 
 const globalConfigModules = [
    ConfigModule.forRoot({
       envFilePath: ['.env.development', '.env'],
       validate: envValidation,
    }),
+   LoggerModule,
    PrismaModule,
    JwtModule.register({
       global: true,
@@ -33,6 +35,7 @@ import { RequestLoggerMiddleware } from './app.middleware'
 import { TempModule } from './temp/temp.module'
 import { StickersModule } from './message/stickers/stickers.module'
 import { FriendRequestModule } from './friend-request/friend-request.module'
+import { SearchModule } from './search/search.module'
 
 @Module({
    imports: [
@@ -45,6 +48,7 @@ import { FriendRequestModule } from './friend-request/friend-request.module'
       FriendRequestModule,
       FriendModule,
       StickersModule,
+      SearchModule,
       TempModule,
    ],
 })

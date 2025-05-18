@@ -19,3 +19,13 @@ export function encodeFilename(originalFilename: string, length: number): string
 
    return `${uniqueId}-${hash}${ext}`
 }
+
+/**
+ * Hàm này dùng để ép kiểu một đối tượng về một kiểu cụ thể trong TypeScript.
+ * @param object - Đối tượng cần ép kiểu
+ * @template T - Kiểu của đối tượng
+ * @returns Đối tượng đã được ép kiểu
+ */
+export function typedObject<T>(object: T): T {
+   return object
+}

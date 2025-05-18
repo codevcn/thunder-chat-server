@@ -1,0 +1,7 @@
+Tôi cần tạo 1 chức năng tìm kiếm conversation trong trang web nhắn tin online của tôi như sau:
+- user nhập keyword vào search input
+- trang web trả về:
+   + các message trong 1 conversation khớp với keyword
+   + các user khác trong hệ thống có fullname hoặc email khớp với keyword
+
+Bạn hãy để xuất workflow để triển khai chức năng tìm kiếm này.

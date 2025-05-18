@@ -1,75 +1,14 @@
-import type { TFindDirectChatData, TStartDirectChatData, TUpdateDirectChatData } from './types'
+import type { TFindDirectChatData, TUpdateDirectChatData } from './types'
 import { Inject, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/configs/db/prisma.service'
 import { EProviderTokens } from '@/utils/enums'
 
 @Injectable()
 export class DirectChatService {
-   constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private prismaService: PrismaService) {}
+   constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService) {}
 
-   async updateDirectChat(directChatId: number, updates: TUpdateDirectChatData): Promise<void> {
-      await this.prismaService.directChat.update({
-         where: { id: directChatId },
-         data: updates,
-      })
-   }
-
-   // async searchDirectChat({
-   //    email,
-   //    nameOfUser,
-   //    creatorId,
-   // }: TSearchDirectChatParams): Promise<TUserWithProfile[]> {
-   //    const user = await this.prismaService.user.findMany({
-   //       where: {
-   //          OR: [{ email }, { nameOfUser }],
-   //          NOT: {
-   //             id: creatorId,
-   //          },
-   //       },
-   //       include: {
-   //          Profile: {
-   //             where: {
-   //                OR: [
-   //                   {
-   //                      firstName: {
-   //                         contains: nameOfUser,
-   //                      },
-   //                   },
-   //                   {
-   //                      lastName: {
-   //                         contains: nameOfUser,
-   //                      },
-   //                   },
-   //                ],
-   //             },
-   //          },
-   //       },
-   //    })
-
-   //    return user
-   // }
-
-   async findDirectChat(
-      recipientId: number,
-      creatorId: number
-   ): Promise<TFindDirectChatData | null> {
-      return await this.prismaService.directChat.findFirst({
-         where: {
-            creatorId,
-            recipientId,
-         },
-         include: {
-            Recipient: {
-               include: {
-                  Profile: true,
-               },
-            },
-         },
-      })
-   }
-
-   async findDirectChatById(id: number): Promise<TFindDirectChatData | null> {
-      return await this.prismaService.directChat.findUnique({
+   async findById(id: number): Promise<TFindDirectChatData | null> {
+      return await this.PrismaService.directChat.findUnique({
          where: { id },
          include: {
             Recipient: {
@@ -77,27 +16,19 @@ export class DirectChatService {
                   Profile: true,
                },
             },
-         },
-      })
-   }
-
-   async startDirectChat(recipientId: number, creatorId: number): Promise<TStartDirectChatData> {
-      const exist_conversation = await this.findDirectChat(recipientId, creatorId)
-      if (exist_conversation) {
-         return exist_conversation
-      }
-      return await this.prismaService.directChat.create({
-         data: {
-            creatorId,
-            recipientId,
-         },
-         include: {
-            Recipient: {
+            Creator: {
                include: {
                   Profile: true,
                },
             },
          },
+      })
+   }
+
+   async updateDirectChat(directChatId: number, updates: TUpdateDirectChatData): Promise<void> {
+      await this.PrismaService.directChat.update({
+         where: { id: directChatId },
+         data: updates,
       })
    }
 

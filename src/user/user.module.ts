@@ -8,6 +8,6 @@ import { CredentialService } from '@/auth/credential.service'
 @Module({
    controllers: [UserController],
    providers: [UserService, JWTService, AuthService, CredentialService],
-   exports: [JWTService, UserService, CredentialService, AuthService],
+   exports: [UserService, JWTService, AuthService, CredentialService],
 })
 export class UserModule {}

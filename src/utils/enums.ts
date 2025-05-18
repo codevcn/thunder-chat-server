@@ -7,6 +7,7 @@ export enum ERoutes {
    FRIEND_REQUEST = 'friend-request',
    HEALTHCHECK = 'healthcheck',
    STICKER = 'sticker',
+   SEARCH = 'search',
 }
 
 export enum EClientCookieNames {
