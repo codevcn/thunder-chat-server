@@ -17,6 +17,7 @@ declare global {
          CLIENT_HOST: string
          ELASTIC_CLOUD_ID: string
          ELASTIC_API_KEY: string
+         DECRYPT_USER_KEY_MASTER_KEY: string
       }
    }
 }

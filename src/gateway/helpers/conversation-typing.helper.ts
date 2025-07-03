@@ -1,5 +1,6 @@
-import type { TClientSocket, TConversationTypingFlags, TUserId } from '../types'
-import { EClientSocketEvents } from '../events'
+import type { TClientSocket, TConversationTypingFlags } from '../gateway.type'
+import { EClientSocketEvents } from '../gateway.event'
+import type { TUserId } from '@/user/user.type'
 
 export class ConversationTypingManager {
    private readonly flags: TConversationTypingFlags = {}

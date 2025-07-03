@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { Client } from '@elastic/elasticsearch'
-import type { TMessageMapping, TUserMapping } from './types'
-import { EESIndexes } from './enums'
+import type { TDirectMessageMapping, TUserMapping } from './elasticsearch.type'
+import { EESIndexes } from './elasticsearch.enum'
 
 export const ESClient = new Client({
    cloud: { id: process.env.ELASTIC_CLOUD_ID },
@@ -23,9 +23,9 @@ export class ElasticsearchService implements OnModuleInit {
       }
    }
 
-   async createMessage(messageId: number, message: TMessageMapping): Promise<void> {
+   async createMessage(messageId: number, message: TDirectMessageMapping): Promise<void> {
       await ESClient.index({
-         index: EESIndexes.MESSAGES,
+         index: EESIndexes.DIRECT_MESSAGES,
          id: messageId.toString(),
          document: message,
          refresh: 'wait_for',
@@ -43,7 +43,7 @@ export class ElasticsearchService implements OnModuleInit {
 
    async deleteMessage(messageId: number): Promise<void> {
       await ESClient.delete({
-         index: EESIndexes.MESSAGES,
+         index: EESIndexes.DIRECT_MESSAGES,
          id: messageId.toString(),
       })
    }
@@ -59,9 +59,9 @@ export class ElasticsearchService implements OnModuleInit {
       keyword: string,
       userId: number,
       limit: number
-   ): Promise<TMessageMapping[]> {
-      const result = await ESClient.search<TMessageMapping>({
-         index: EESIndexes.MESSAGES,
+   ): Promise<TDirectMessageMapping[]> {
+      const result = await ESClient.search<TDirectMessageMapping>({
+         index: EESIndexes.DIRECT_MESSAGES,
          query: {
             bool: {
                must: [
@@ -78,32 +78,46 @@ export class ElasticsearchService implements OnModuleInit {
             },
          },
       })
+      console.log('>>> result 1:', { result, keyword })
       return result.hits.hits.map((hit) => hit._source!)
    }
 
    async searchUsers(keyword: string, limit: number): Promise<TUserMapping[]> {
       const result = await ESClient.search<TUserMapping>({
          index: EESIndexes.USERS,
+         // query: {
+         //    bool: {
+         //       should: [
+         //          { match: { email: { query: keyword, fuzziness: 'AUTO' } } },
+         //          { match: { full_name: { query: keyword, fuzziness: 'AUTO' } } },
+         //       ],
+         //       minimum_should_match: 1,
+         //    },
+         // },
          query: {
-            bool: {
-               should: [
-                  { match: { username: { query: keyword, fuzziness: 'AUTO' } } },
-                  { match: { email: { query: keyword, fuzziness: 'AUTO' } } },
-                  { match: { full_name: { query: keyword, fuzziness: 'AUTO' } } },
-               ],
-               minimum_should_match: 1,
+            match: {
+               email: {
+                  query: keyword,
+                  fuzziness: 'AUTO',
+               },
             },
          },
          highlight: {
             fields: {
-               username: {},
                email: {},
                full_name: {},
             },
          },
-         sort: [{ full_name: { order: 'asc' } }],
+         sort: [{ 'full_name.keyword': { order: 'asc' } }, { 'email.keyword': { order: 'asc' } }],
          size: limit,
       })
+      // const result = await ESClient.search<TUserMapping>({
+      //    index: EESIndexes.USERS,
+      //    query: { match_all: {} },
+      //    size: 10,
+      // })
+      console.log('>>> result 2:', { result, keyword })
       return result.hits.hits.map((hit) => hit._source!)
+      // return []
    }
 }

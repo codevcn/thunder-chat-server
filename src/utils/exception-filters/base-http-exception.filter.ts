@@ -2,7 +2,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/co
 import type { Response } from 'express'
 import type { THttpErrorResBody } from '@/utils/types'
 import { BaseHttpException } from '../exceptions/base-http.exception'
-import { EValidationMessages } from '../validation/messages'
+import { EValidationMessages } from '../messages'
 
 @Catch(HttpException)
 export class BaseHttpExceptionFilter implements ExceptionFilter<HttpException> {

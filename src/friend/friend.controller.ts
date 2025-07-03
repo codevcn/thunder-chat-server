@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common'
 import { FriendService } from './friend.service'
-import { GetFriendsDTO } from './DTO'
-import type { IFriendController } from './interface'
+import { GetFriendsDTO } from './friend.dto'
+import type { IFriendController } from './friend.interface'
 import { ERoutes } from '@/utils/enums'
 import { AuthGuard } from '@/auth/auth.guard'
 

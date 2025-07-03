@@ -5,12 +5,14 @@ import { ValidationPipe } from '@nestjs/common'
 import { BaseHttpExceptionFilter } from './utils/exception-filters/base-http-exception.filter'
 import cookieParser from 'cookie-parser'
 
+const apiPrefix: string = 'api'
+
 async function bootstrap() {
    const app = await NestFactory.create<NestExpressApplication>(AppModule)
    const { CLIENT_HOST_DEV, PORT } = process.env
 
    // set api prefix
-   app.setGlobalPrefix('api')
+   app.setGlobalPrefix(apiPrefix)
 
    // for getting cookie in req
    app.use(cookieParser())

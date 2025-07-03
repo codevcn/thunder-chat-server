@@ -1,4 +1,4 @@
-import { UnknownException } from '@/utils/exceptions/unknown.exception'
+import { UnknownException } from '@/utils/exceptions/system.exception'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

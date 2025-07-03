@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
-import { TGlobalSearchData } from './types'
+import { TGlobalSearchData } from './search.type'
 import { ElasticsearchService } from '@/configs/elasticsearch/elasticsearch.service'
-import { SocketService } from '@/gateway/socket.service'
+import { SocketService } from '@/gateway/socket/socket.service'
 
 @Injectable()
 export class SearchService {

@@ -8,6 +8,19 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model MessageMapping {
+    id        Int      @id @default(autoincrement())
+    userId    Int      @unique @map("user_id")
+    mappings  String?
+    key       String   @db.VarChar(255)
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+    User User @relation("MessageMappings", fields: [userId], references: [id])
+
+    @@index([userId], type: BTree)
+    @@map("message_mappings")
+}
+
 model User {
     id        Int      @id @default(autoincrement())
     email     String   @unique @db.VarChar(255)
@@ -15,15 +28,16 @@ model User {
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
     Profile                   Profile?
-    DirectChatsAsSender       DirectChat[]    @relation("DirectChatsAsSender")
-    DirectChatsAsRecipient    DirectChat[]    @relation("DirectChatsAsRecipient")
-    GroupMessages             GroupMessage[]  @relation("GroupMessages")
-    DirectMessages            DirectMessage[] @relation("DirectMessagesAsSender")
-    FriendsAsRecipient        Friend[]        @relation("FriendsAsRecipient")
-    FriendsAsSender           Friend[]        @relation("FriendsAsSender")
-    FriendRequestsSent        FriendRequest[] @relation("FriendRequestsSent")
-    FriendRequestsReceived    FriendRequest[] @relation("FriendRequestsReceived")
-    DirectMessagesAsRecipient DirectMessage[] @relation("DirectMessagesAsRecipient")
+    DirectChatsAsSender       DirectChat[]     @relation("DirectChatsAsSender")
+    DirectChatsAsRecipient    DirectChat[]     @relation("DirectChatsAsRecipient")
+    GroupMessages             GroupMessage[]   @relation("GroupMessages")
+    DirectMessages            DirectMessage[]  @relation("DirectMessagesAsSender")
+    FriendsAsRecipient        Friend[]         @relation("FriendsAsRecipient")
+    FriendsAsSender           Friend[]         @relation("FriendsAsSender")
+    FriendRequestsSent        FriendRequest[]  @relation("FriendRequestsSent")
+    FriendRequestsReceived    FriendRequest[]  @relation("FriendRequestsReceived")
+    DirectMessagesAsRecipient DirectMessage[]  @relation("DirectMessagesAsRecipient")
+    MessageMappings           MessageMapping[] @relation("MessageMappings")
 
     @@map("users")
 }

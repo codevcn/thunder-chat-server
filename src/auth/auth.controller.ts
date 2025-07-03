@@ -9,11 +9,11 @@ import {
    ClassSerializerInterceptor,
 } from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
-import { CheckAuthDataDTO, LoginUserDTO } from '@/auth/DTO'
+import { CheckAuthDataDTO, LoginUserDTO } from '@/auth/auth.dto'
 import { AuthService } from '@/auth/auth.service'
 import type { Response } from 'express'
 import { AuthGuard } from '@/auth/auth.guard'
-import type { IAuthController } from './interfaces'
+import type { IAuthController } from './auth.interface'
 import { User } from '@/user/user.decorator'
 import { TUser } from '@/utils/entities/user.entity'
 

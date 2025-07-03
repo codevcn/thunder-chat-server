@@ -1,7 +1,7 @@
 import type { Request } from 'express'
-import { EClientCookieNames } from './enums'
+import type { EClientCookieNames } from './enums'
 import type { TUser } from './entities/user.entity'
-import { HttpStatus } from '@nestjs/common'
+import type { HttpStatus } from '@nestjs/common'
 
 export type TRequestWithUser = Request & { user: TUser }
 
@@ -33,3 +33,24 @@ export type TWsErrorResponse = {
    message: string
    httpStatus: HttpStatus
 }
+
+export type TWorkerResponse<R> = {
+   success: boolean
+   error?: Error
+   data?: R
+}
+
+export type TWorkerResponseCallback<T> = (event: MessageEvent<T>) => void
+
+export type TWorkerExitCallback = (code: number) => void
+
+export type TWorkerErrorCallback = (error: Error) => void
+
+export type TRetryRequestOptions = {
+   maxRetries: number
+   onPreRetry?: TOnPreRetry
+}
+
+export type TOnPreRetry = (error: Error, retriesCount: number) => void
+
+export type TRetryRequestExecutor<R> = () => R

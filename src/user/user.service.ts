@@ -1,20 +1,23 @@
 import { Injectable, ConflictException, NotFoundException, Inject } from '@nestjs/common'
-import type { TCreateUserParams, TSearchUsersData, TSearchProfilesData } from './types'
+import type { TCreateUserParams, TSearchUsersData, TSearchProfilesData } from './user.type'
 import { PrismaService } from '../configs/db/prisma.service'
-import { EProviderTokens } from '@/utils/enums'
-import { JWTService } from '@/auth/jwt.service'
-import { CredentialService } from '@/auth/credential.service'
-import { EAuthMessages } from '@/auth/messages'
+import { EProviderTokens, ESyncDataToESWorkerType } from '@/utils/enums'
+import { JWTService } from '@/auth/jwt/jwt.service'
+import { CredentialService } from '@/auth/credentials/credentials.service'
+import { EAuthMessages } from '@/auth/auth.message'
 import { TUser, TUserWithProfile } from '@/utils/entities/user.entity'
 import { TJWTToken, TSignatureObject } from '@/utils/types'
-import { SearchUsersDTO } from './DTO'
+import { SearchUsersDTO } from './user.dto'
+import { EUserMessages } from '@/user/user.message'
+import { SyncDataToESService } from '@/configs/elasticsearch/sync-data-to-ES/sync-data-to-ES.service'
 
 @Injectable()
 export class UserService {
    constructor(
       @Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService,
       private jwtService: JWTService,
-      private credentialService: CredentialService
+      private credentialService: CredentialService,
+      private syncDataToESService: SyncDataToESService
    ) {}
 
    async findById(id: number): Promise<TUser | null> {
@@ -32,11 +35,6 @@ export class UserService {
       })
    }
 
-   async registerUser(createUserData: TCreateUserParams): Promise<TJWTToken> {
-      const user = await this.createUser(createUserData)
-      return this.jwtService.createJWT({ email: user.email, user_id: user.id })
-   }
-
    async createUser({ email, password }: TCreateUserParams): Promise<TUser> {
       const hashedPassword = await this.credentialService.getHashedPassword(password)
       const exist_user = await this.PrismaService.user.findUnique({
@@ -45,13 +43,22 @@ export class UserService {
       if (exist_user) {
          throw new ConflictException(EAuthMessages.USER_EXISTED)
       }
-
-      return await this.PrismaService.user.create({
+      const user = await this.PrismaService.user.create({
          data: {
             email: email,
             password: hashedPassword,
          },
       })
+      this.syncDataToESService.syncDataToES(user.id, {
+         type: ESyncDataToESWorkerType.CREATE_USER,
+         data: user,
+      })
+      return user
+   }
+
+   async registerUser(createUserData: TCreateUserParams): Promise<TJWTToken> {
+      const user = await this.createUser(createUserData)
+      return this.jwtService.createJWT({ email: user.email, user_id: user.id })
    }
 
    async getUserByEmail(email: string): Promise<TUserWithProfile> {
@@ -64,7 +71,7 @@ export class UserService {
          },
       })
       if (!user) {
-         throw new NotFoundException(EAuthMessages.USER_NOT_FOUND)
+         throw new NotFoundException(EUserMessages.USER_NOT_FOUND)
       }
 
       return user

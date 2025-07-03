@@ -1,8 +1,8 @@
 import { BaseWsException } from '@/utils/exceptions/base-ws.exception'
 import { Catch, ArgumentsHost, HttpStatus } from '@nestjs/common'
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets'
-import type { TClientSocket } from '@/gateway/types'
-import { EClientSocketEvents } from '@/gateway/events'
+import type { TClientSocket } from '@/gateway/gateway.type'
+import { EClientSocketEvents } from '@/gateway/gateway.event'
 import type { TWsErrorResponse } from '../types'
 
 @Catch(WsException)

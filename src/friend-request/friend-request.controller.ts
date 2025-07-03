@@ -1,7 +1,11 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
-import { FriendRequestActionDTO, GetFriendRequestsDTO, SendFriendRequestDTO } from './DTO'
+import {
+   FriendRequestActionDTO,
+   GetFriendRequestsDTO,
+   SendFriendRequestDTO,
+} from './friend-request.dto'
 import { FriendRequestService } from './friend-request.service'
-import type { IFriendRequestController } from './interface'
+import type { IFriendRequestController } from './friend-request.interface'
 import { ERoutes } from '@/utils/enums'
 import { AuthGuard } from '@/auth/auth.guard'
 

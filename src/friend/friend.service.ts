@@ -3,8 +3,8 @@ import { EProviderTokens } from '@/utils/enums'
 import { PrismaService } from '@/configs/db/prisma.service'
 import type { TSignatureObject } from '@/utils/types'
 import { Inject, Injectable } from '@nestjs/common'
-import { GetFriendsDTO } from './DTO'
-import type { TGetFriendsData } from './types'
+import { GetFriendsDTO } from './friend.dto'
+import type { TGetFriendsData } from './friend.type'
 import { countMutualFriends } from '@prisma/client/sql'
 
 @Injectable()
@@ -12,6 +12,7 @@ export class FriendService {
    constructor(@Inject(EProviderTokens.PRISMA_CLIENT) private PrismaService: PrismaService) {}
 
    async findByIds(userId: number, friendId: number): Promise<TFriendRequest | null> {
+      console.log('>>> findByIds:', { userId, friendId })
       return await this.PrismaService.friendRequest.findFirst({
          where: {
             OR: [

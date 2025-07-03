@@ -2,7 +2,7 @@ import { AuthGuard } from '@/auth/auth.guard'
 import { DirectChatService } from '@/direct-chat/direct-chat.service'
 import { Controller, Get, UseGuards, Param } from '@nestjs/common'
 import { ERoutes } from '@/utils/enums'
-import { IDirectChatsController } from './interfaces'
+import { IDirectChatsController } from './direct-chat.interface'
 
 @Controller(ERoutes.DIRECT_CHAT)
 @UseGuards(AuthGuard)

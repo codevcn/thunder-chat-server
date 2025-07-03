@@ -3,7 +3,7 @@ import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { DirectChatsModule } from './direct-chat/direct-chat.module'
-import { MessageModule } from './message/message.module'
+import { DirectMessageModule } from './direct-message/direct-message.module'
 import { PrismaModule } from './configs/db/prisma.module'
 import { envValidation } from './utils/validation/env.validation'
 import { UserModule } from './user/user.module'
@@ -33,7 +33,7 @@ import { FriendModule } from './friend/friend.module'
 import { GatewayModule } from './gateway/gateway.module'
 import { RequestLoggerMiddleware } from './app.middleware'
 import { TempModule } from './temp/temp.module'
-import { StickersModule } from './message/stickers/stickers.module'
+import { StickersModule } from './direct-message/stickers/stickers.module'
 import { FriendRequestModule } from './friend-request/friend-request.module'
 import { SearchModule } from './search/search.module'
 
@@ -43,7 +43,7 @@ import { SearchModule } from './search/search.module'
       AuthModule,
       GatewayModule,
       DirectChatsModule,
-      MessageModule,
+      DirectMessageModule,
       UserModule,
       FriendRequestModule,
       FriendModule,

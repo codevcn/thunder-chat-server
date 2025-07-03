@@ -1,4 +1,5 @@
-import type { TMsgToken, TUserId } from '@/gateway/types'
+import type { TMsgToken } from '@/gateway/gateway.type'
+import type { TUserId } from '@/user/user.type'
 import ms from 'ms'
 
 export class MessageTokensManager {

@@ -6,30 +6,32 @@ import {
 } from '@nestjs/websockets'
 import type { OnGatewayConnection, OnGatewayInit, OnGatewayDisconnect } from '@nestjs/websockets'
 import { Server } from 'socket.io'
-import { EClientSocketEvents, EInitEvents } from './events'
-import { ESocketNamespaces } from './enums'
-import { HttpStatus, UseFilters, UsePipes } from '@nestjs/common'
+import { EClientSocketEvents, EInitEvents } from './gateway.event'
+import { ESocketNamespaces } from './gateway.enum'
+import { HttpStatus, UseFilters, UsePipes, UseInterceptors } from '@nestjs/common'
 import { FriendService } from '@/friend/friend.service'
 import { BaseWsException } from '../utils/exceptions/base-ws.exception'
-import { EFriendMessages } from '@/friend/messages'
+import { EFriendMessages } from '@/friend/friend.message'
 import {
    CatchInternalSocketError,
    BaseWsExceptionsFilter,
 } from '@/utils/exception-filters/base-ws-exception.filter'
-import { MessageService } from '@/message/messages.service'
-import type { TClientSocket } from './types'
-import type { IEmitSocketEvents, IGateway } from './interfaces'
-import { wsValidationPipe } from './validation'
-import { SocketService } from './socket.service'
-import { MarkAsSeenDTO, TypingDTO, SendDirectMessageDTO } from './DTO'
-import type { TMessageOffset } from '@/message/types'
-import { EMsgMessages } from '@/message/messages'
+import { DirectMessageService } from '@/direct-message/direct-message.service'
+import type { TClientSocket } from './gateway.type'
+import type { IEmitSocketEvents, IGateway } from './gateway.interface'
+import { wsValidationPipe } from './gateway.validation'
+import { SocketService } from './socket/socket.service'
+import { MarkAsSeenDTO, TypingDTO, SendDirectMessageDTO } from './gateway.dto'
+import type { TMessageOffset } from '@/direct-message/direct-message.type'
+import { EMsgMessages } from '@/direct-message/direct-message.message'
 import { AuthService } from '@/auth/auth.service'
 import { MessageTokensManager } from '@/gateway/helpers/message-tokens.helper'
-import { EMessageStatus, EMessageTypes } from '@/message/enums'
+import { EMessageStatus, EMessageTypes } from '@/direct-message/direct-message.enum'
 import { DirectChatService } from '@/direct-chat/direct-chat.service'
 import type { TDirectMessage } from '@/utils/entities/direct-message.entity'
 import { ConversationTypingManager } from './helpers/conversation-typing.helper'
+import { SyncDataToESService } from '@/configs/elasticsearch/sync-data-to-ES/sync-data-to-ES.service'
+import { GatewayInterceptor } from './gateway.interceptor'
 
 @WebSocketGateway({
    cors: {
@@ -43,6 +45,7 @@ import { ConversationTypingManager } from './helpers/conversation-typing.helper'
 })
 @UseFilters(new BaseWsExceptionsFilter())
 @UsePipes(wsValidationPipe)
+// @UseInterceptors(GatewayInterceptor)
 export class AppGateway
    implements
       OnGatewayConnection<TClientSocket>,
@@ -51,48 +54,80 @@ export class AppGateway
       IGateway
 {
    private readonly messageTokensManager = new MessageTokensManager()
-   private readonly convTypingManager: ConversationTypingManager = new ConversationTypingManager()
+   private readonly convTypingManager = new ConversationTypingManager()
 
    constructor(
       private socketService: SocketService,
       private friendService: FriendService,
-      private messageService: MessageService,
+      private DirectMessageService: DirectMessageService,
       private authService: AuthService,
-      private directChatService: DirectChatService
+      private directChatService: DirectChatService,
+      private syncDataToESService: SyncDataToESService
    ) {}
 
-   afterInit(server: Server): void {
-      this.authService.validateSocketConnection(server)
+   /**
+    * This function is called (called one time) when the server is initialized.
+    * It sets the server and the server middleware.
+    * The server middleware is used to validate the socket connection.
+    * @param server - The server instance.
+    */
+   async afterInit(server: Server): Promise<void> {
       this.socketService.setServer(server)
+      this.socketService.setServerMiddleware(async (socket, next) => {
+         console.log('>>> socket 123:', socket.id)
+         try {
+            await this.authService.validateSocketConnection(socket)
+         } catch (error) {
+            next(error)
+            return
+         }
+         next()
+      })
    }
 
+   /**
+    * This function is called when a client connects to the server.
+    * It validates the socket connection and adds the client to the connected clients list.
+    * @param client - The client instance.
+    */
    async handleConnection(client: TClientSocket): Promise<void> {
-      console.log('>>> connected socket:', {
-         socketId: client.id,
-         auth: client.handshake.auth,
+      queueMicrotask(() => {
+         console.log('>>> connected socket:', {
+            socketId: client.id,
+            auth: client.handshake.auth,
+         })
       })
       try {
          const { clientId, messageOffset, directChatId, groupId } =
             await this.authService.validateSocketAuth(client)
+         // await this.syncDataToESService.initESMessageEncryptor(clientId)
          this.socketService.addConnectedClient(clientId, client)
          client.emit(EInitEvents.client_connected, 'Connected Sucessfully!')
          if (messageOffset) {
             await this.recoverMissingMessages(client, messageOffset, directChatId, groupId)
          }
       } catch (error) {
+         console.log('>>> error:', error)
          client.disconnect(true)
       }
    }
 
+   /**
+    * This function is called when a client disconnects from the server.
+    * It removes the client from the connected clients list and the message tokens.
+    * @param client - The client instance.
+    */
    async handleDisconnect(client: TClientSocket): Promise<void> {
-      console.log('>>> discnn socket:', {
-         socketId: client.id,
-         auth: client.handshake.auth,
+      queueMicrotask(() => {
+         console.log('>>> disconnected socket:', {
+            socketId: client.id,
+            auth: client.handshake.auth,
+         })
       })
-      const { clientId } = client.handshake.auth
-      if (clientId) {
-         this.socketService.removeConnectedClient(clientId)
-         this.messageTokensManager.removeAllTokens(clientId)
+      const { userId } = client.handshake.auth
+      if (userId) {
+         this.socketService.removeConnectedClient(userId)
+         this.messageTokensManager.removeAllTokens(userId)
       }
    }
 
@@ -100,10 +135,10 @@ export class AppGateway
       clientSocket: TClientSocket,
       messageOffset: TMessageOffset,
       directChatId?: number,
-      groupId?: number
+      groupChatId?: number
    ): Promise<void> {
       if (directChatId) {
-         const messages = await this.messageService.getNewerDirectMessages(
+         const messages = await this.DirectMessageService.getNewerDirectMessages(
             messageOffset,
             directChatId
          )
@@ -142,7 +177,7 @@ export class AppGateway
    ): Promise<void> {
       const { id, socket } = client
       const { content, timestamp, directChatId, receiverId, stickerUrl, type } = message
-      const newMessage = await this.messageService.createNewDirectMessage(
+      const newMessage = await this.DirectMessageService.createNewMessage(
          content,
          id,
          timestamp,
@@ -165,18 +200,22 @@ export class AppGateway
       @MessageBody() payload: SendDirectMessageDTO,
       @ConnectedSocket() client: TClientSocket
    ) {
-      const { type, msgPayload } = payload
+      console.log('>>> payload 123:', payload)
       const { clientId } = await this.authService.validateSocketAuth(client)
+      const { type, msgPayload } = payload
       const { receiverId, token } = msgPayload
+
       await this.checkUniqueMessage(token, clientId)
       await this.checkFriendship(clientId, receiverId)
       const { directChatId, timestamp, content } = msgPayload
+
+      // Content đã được mã hóa bởi interceptor
       switch (type) {
          case EMessageTypes.TEXT:
             await this.handleMessage(
                { id: clientId, socket: client },
                {
-                  content,
+                  content, // Content đã được mã hóa
                   timestamp,
                   directChatId,
                   receiverId,
@@ -208,7 +247,7 @@ export class AppGateway
       @ConnectedSocket() client: TClientSocket
    ) {
       const { messageId, receiverId } = data
-      await this.messageService.updateMessageStatus(messageId, EMessageStatus.SEEN)
+      await this.DirectMessageService.updateMessageStatus(messageId, EMessageStatus.SEEN)
       const recipientSocket = this.socketService.getConnectedClient<IEmitSocketEvents>(receiverId)
       if (recipientSocket) {
          recipientSocket.emit(EClientSocketEvents.message_seen_direct, {

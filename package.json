@@ -42,6 +42,7 @@
       "dayjs": "^1.11.10",
       "express-session": "^1.17.3",
       "ms": "^2.1.3",
+      "p-retry": "^6.2.1",
       "redis": "^4.6.10",
       "reflect-metadata": "^0.1.13",
       "rxjs": "^7.8.1",
